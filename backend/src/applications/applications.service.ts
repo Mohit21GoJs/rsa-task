@@ -16,6 +16,7 @@ import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { BulkUpdateApplicationDto } from './dto/bulk-update-application.dto';
 import { WorkflowService } from '../workflow/workflow.service';
+import { LlmService } from '../llm/llm.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -27,6 +28,7 @@ export class ApplicationsService {
     @InjectRepository(Application)
     private readonly applicationRepository: Repository<Application>,
     private readonly workflowService: WorkflowService,
+    private readonly llmService: LlmService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -221,6 +223,40 @@ export class ApplicationsService {
     );
 
     return expiredApplications.length;
+  }
+
+  async generateCoverLetter(id: string): Promise<Application> {
+    const application = await this.findOne(id);
+
+    try {
+      // Generate cover letter using LLM service
+      const coverLetter = await this.llmService.generateCoverLetter({
+        company: application.company,
+        role: application.role,
+        jobDescription: application.jobDescription,
+        resume: application.resume,
+      });
+
+      // Update the application with the generated cover letter
+      application.coverLetter = coverLetter;
+      const updatedApplication =
+        await this.applicationRepository.save(application);
+
+      // Send real-time notification
+      this.sendNotification({
+        type: 'cover_letter_generated',
+        applicationId: application.id,
+        company: application.company,
+        role: application.role,
+        message: `Cover letter generated for ${application.company} - ${application.role}`,
+      });
+
+      return updatedApplication;
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to generate cover letter: ' + error.message,
+      );
+    }
   }
 
   // Method to send notifications to SSE stream

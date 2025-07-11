@@ -154,6 +154,20 @@ export class ApplicationsController {
     return this.applicationsService.update(id, updateApplicationDto);
   }
 
+  @Post(':id/generate-cover-letter')
+  @ApiOperation({ summary: 'Generate cover letter for an application' })
+  @ApiParam({ name: 'id', description: 'Application ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Cover letter generated successfully',
+    type: Application,
+  })
+  @ApiResponse({ status: 404, description: 'Application not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async generateCoverLetter(@Param('id') id: string): Promise<Application> {
+    return this.applicationsService.generateCoverLetter(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a job application' })

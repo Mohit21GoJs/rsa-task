@@ -74,6 +74,13 @@ export const applicationApi = {
     })
   },
 
+  // Generate cover letter
+  generateCoverLetter: async (id: string): Promise<Application> => {
+    return fetchApi<Application>(`/applications/${id}/generate-cover-letter`, {
+      method: 'POST',
+    })
+  },
+
   // Bulk update applications
   bulkUpdate: async (data: BulkUpdateDto): Promise<Application[]> => {
     return fetchApi<Application[]>('/applications/bulk-update', {
