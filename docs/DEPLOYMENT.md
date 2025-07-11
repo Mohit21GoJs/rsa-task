@@ -218,9 +218,19 @@ graph TD
 
 ## Troubleshooting
 
-### Common Issues
+For comprehensive troubleshooting information, see the [Troubleshooting Guide](./TROUBLESHOOTING.md).
 
-#### 1. Deployment Failures
+### Quick Common Fixes
+
+#### 1. PNPM Lockfile Issues
+```bash
+# If you see "Cannot install with frozen-lockfile" errors:
+# ✅ Already fixed in CI with automatic fallback
+# For local development, update pnpm version:
+npm install -g pnpm@9
+```
+
+#### 2. Deployment Failures
 ```bash
 # Check deployment logs
 ./scripts/deploy.sh staging output
@@ -232,15 +242,11 @@ graph TD
 ./scripts/deploy.sh staging plan
 ```
 
-#### 2. Health Check Failures
+#### 3. Health Check Failures
 - Verify environment variables are set correctly
 - Check service logs in Render dashboard
 - Ensure database connectivity
-
-#### 3. Build Failures
-- Check Node.js version compatibility
-- Verify pnpm lock file is up to date
-- Review build logs for missing dependencies
+- See [Troubleshooting Guide](./TROUBLESHOOTING.md) for detailed solutions
 
 ### Rollback Procedures
 

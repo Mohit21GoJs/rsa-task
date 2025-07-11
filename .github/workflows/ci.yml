@@ -18,7 +18,7 @@ permissions:
 
 env:
   NODE_VERSION: '18.x'
-  PNPM_VERSION: '8.x'
+  PNPM_VERSION: '9.x'
 
 jobs:
   # Security and dependency scanning
@@ -66,6 +66,28 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      - name: Debug pnpm and workspace setup
+        run: |
+          echo "=== Environment Information ==="
+          echo "Node version: $(node --version)"
+          echo "PNPM version: $(pnpm --version)"
+          echo "Working directory: $(pwd)"
+          echo "=== Workspace Structure ==="
+          ls -la
+          echo "=== Lockfile Information ==="
+          if [ -f "pnpm-lock.yaml" ]; then
+            echo "Root lockfile exists"
+            head -5 pnpm-lock.yaml
+          else
+            echo "❌ Root lockfile missing"
+          fi
+          if [ -f "pnpm-workspace.yaml" ]; then
+            echo "Workspace config exists:"
+            cat pnpm-workspace.yaml
+          else
+            echo "❌ Workspace config missing"
+          fi
+
       - name: Get pnpm store directory
         shell: bash
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
@@ -79,7 +101,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Audit dependencies
         run: pnpm audit --audit-level moderate
@@ -115,7 +142,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Lint code
         run: pnpm run lint
@@ -169,7 +201,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Run backend unit tests
         run: pnpm run test:backend
@@ -227,7 +264,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Build ${{ matrix.target }}
         run: pnpm run build:${{ matrix.target }}

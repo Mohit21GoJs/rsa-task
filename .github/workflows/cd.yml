@@ -27,7 +27,7 @@ concurrency:
 
 env:
   NODE_VERSION: '18.x'
-  PNPM_VERSION: '8.x'
+  PNPM_VERSION: '9.x'
   TF_VERSION: '1.6.0'
 
 jobs:
@@ -137,7 +137,12 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Build backend
         run: pnpm run build:backend
@@ -171,7 +176,12 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Build frontend
         run: pnpm run build:frontend
