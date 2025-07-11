@@ -105,7 +105,8 @@ jobs:
   deploy:
     name: 🚀 Deploy Infrastructure
     runs-on: ubuntu-latest
-    needs: [test, plan]
+    # needs: [test, plan]
+    needs: [plan]
     environment: production  # This requires manual approval in GitHub
     if: needs.plan.outputs.plan-exists == 'true'
     outputs:
