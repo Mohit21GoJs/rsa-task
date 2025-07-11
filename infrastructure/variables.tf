@@ -5,6 +5,19 @@ variable "render_api_key" {
   sensitive   = true
 }
 
+variable "environment" {
+  description = "Environment name (e.g., development, staging, production)"
+  type        = string
+  default     = "production"
+
+  validation {
+    condition = contains([
+      "development", "staging", "production"
+    ], var.environment)
+    error_message = "Environment must be one of: development, staging, production."
+  }
+}
+
 variable "github_repo_url" {
   description = "GitHub repository URL for the application"
   type        = string

@@ -31,28 +31,12 @@ resource "terraform_data" "validate_secrets" {
   }
 }
 
-# Custom domain configuration (if using custom domains)
-resource "render_custom_domain" "backend_domain" {
-  count = var.environment == "production" ? 1 : 0
-
-  service_id = render_web_service.backend.id
-  name       = "api.persona-job-assistant.com"
-}
-
-resource "render_custom_domain" "frontend_domain" {
-  count = var.environment == "production" ? 1 : 0
-
-  service_id = render_web_service.frontend.id
-  name       = "persona-job-assistant.com"
-}
-
 # Environment variables with security considerations
 locals {
   secure_backend_env_vars = merge(
     {
       NODE_ENV               = var.environment == "production" ? "production" : "staging"
       PORT                   = "3000"
-      DATABASE_URL           = render_postgres.database.internal_connection_string
       TEMPORAL_ADDRESS       = var.temporal_address
       TEMPORAL_NAMESPACE     = var.temporal_namespace
       GEMINI_API_KEY         = var.gemini_api_key
@@ -79,7 +63,7 @@ locals {
 
   secure_frontend_env_vars = {
     NODE_ENV            = var.environment == "production" ? "production" : "staging"
-    NEXT_PUBLIC_API_URL = var.environment == "production" && length(render_custom_domain.backend_domain) > 0 ? "https://${render_custom_domain.backend_domain[0].name}" : "https://${render_web_service.backend.url}"
+    NEXT_PUBLIC_API_URL = "https://${render_web_service.backend.url}"
     PORT                = "3000"
 
     # Security settings

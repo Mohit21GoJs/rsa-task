@@ -18,17 +18,6 @@ output "frontend_service_id" {
   value       = render_web_service.frontend.id
 }
 
-output "worker_service_id" {
-  description = "Render service ID for the Temporal worker"
-  value       = render_background_worker.worker.id
-}
-
-output "database_url" {
-  description = "PostgreSQL database connection URL"
-  value       = render_postgres.database.internal_connection_string
-  sensitive   = true
-}
-
 output "environment" {
   description = "Deployed environment name"
   value       = var.environment
