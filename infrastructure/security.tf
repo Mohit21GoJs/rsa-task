@@ -44,12 +44,12 @@ locals {
       DEFAULT_DEADLINE_WEEKS = var.default_deadline_weeks
 
       # Database connection
-      DATABASE_URL           = render_postgres.database.connection_string
-      DATABASE_HOST          = render_postgres.database.host
-      DATABASE_PORT          = render_postgres.database.port
-      DATABASE_NAME          = render_postgres.database.database_name
-      DATABASE_USER          = render_postgres.database.database_user
-      DATABASE_PASSWORD      = render_postgres.database.database_password
+      DATABASE_URL      = render_postgres.database.connection_string
+      DATABASE_HOST     = render_postgres.database.host
+      DATABASE_PORT     = render_postgres.database.port
+      DATABASE_NAME     = render_postgres.database.database_name
+      DATABASE_USER     = render_postgres.database.database_user
+      DATABASE_PASSWORD = render_postgres.database.database_password
 
       # Security settings
       CORS_ORIGINS       = join(",", var.allowed_origins)
@@ -88,12 +88,12 @@ locals {
       DEFAULT_DEADLINE_WEEKS = var.default_deadline_weeks
 
       # Database connection
-      DATABASE_URL           = render_postgres.database.connection_string
-      DATABASE_HOST          = render_postgres.database.host
-      DATABASE_PORT          = render_postgres.database.port
-      DATABASE_NAME          = render_postgres.database.database_name
-      DATABASE_USER          = render_postgres.database.database_user
-      DATABASE_PASSWORD      = render_postgres.database.database_password
+      DATABASE_URL      = render_postgres.database.connection_string
+      DATABASE_HOST     = render_postgres.database.host
+      DATABASE_PORT     = render_postgres.database.port
+      DATABASE_NAME     = render_postgres.database.database_name
+      DATABASE_USER     = render_postgres.database.database_user
+      DATABASE_PASSWORD = render_postgres.database.database_password
 
       # Logging and monitoring
       LOG_LEVEL              = var.environment == "production" ? "info" : "debug"

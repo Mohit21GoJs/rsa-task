@@ -126,10 +126,10 @@ resource "render_web_service" "frontend" {
 
 # PostgreSQL Database
 resource "render_postgres" "database" {
-  name     = local.database_name
-  plan     = var.database_plan
-  region   = var.region
-  version  = "16"
+  name    = local.database_name
+  plan    = var.database_plan
+  region  = var.region
+  version = "16"
 
   # Database configuration
   database_name = "job_assistant"
@@ -148,7 +148,7 @@ resource "render_web_service" "temporal" {
       auto_deploy = var.auto_deploy_enabled
       branch      = var.github_branch
       repo_url    = "https://github.com/Mohit21GoJs/rsa-task"
-      
+
       # Use our custom Temporal Docker configuration
       dockerfile_path = "temporal/Dockerfile"
       docker_context  = "."
@@ -167,26 +167,26 @@ resource "render_web_service" "temporal" {
   # Environment variables for Temporal
   environment_variables = {
     # Temporal server configuration
-    TEMPORAL_ADDRESS                = "0.0.0.0:7233"
-    TEMPORAL_UI_ADDRESS             = "0.0.0.0:8080"
-    
+    TEMPORAL_ADDRESS    = "0.0.0.0:7233"
+    TEMPORAL_UI_ADDRESS = "0.0.0.0:8080"
+
     # Database configuration for auto-setup image
-    DB                              = "postgresql"
-    DB_PORT                         = render_postgres.database.port
-    POSTGRES_HOST                   = render_postgres.database.host
-    POSTGRES_PORT                   = render_postgres.database.port
-    POSTGRES_USER                   = render_postgres.database.database_user
-    POSTGRES_PWD                    = render_postgres.database.database_password
-    POSTGRES_DATABASE               = "temporal"
-    
+    DB                = "postgresql"
+    DB_PORT           = render_postgres.database.port
+    POSTGRES_HOST     = render_postgres.database.host
+    POSTGRES_PORT     = render_postgres.database.port
+    POSTGRES_USER     = render_postgres.database.database_user
+    POSTGRES_PWD      = render_postgres.database.database_password
+    POSTGRES_DATABASE = "temporal"
+
     # Temporal specific settings
-    TEMPORAL_NAMESPACE              = var.temporal_namespace
-    TEMPORAL_LOG_LEVEL              = "info"
-    TEMPORAL_BIND_ON_IP             = "0.0.0.0"
-    
+    TEMPORAL_NAMESPACE  = var.temporal_namespace
+    TEMPORAL_LOG_LEVEL  = "info"
+    TEMPORAL_BIND_ON_IP = "0.0.0.0"
+
     # Enable auto-setup
-    TEMPORAL_AUTO_SETUP             = "true"
-    TEMPORAL_VISIBILITY_AUTO_SETUP  = "true"
+    TEMPORAL_AUTO_SETUP            = "true"
+    TEMPORAL_VISIBILITY_AUTO_SETUP = "true"
   }
 
   # Resource limits
