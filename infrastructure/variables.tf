@@ -87,7 +87,7 @@ variable "auto_deploy_enabled" {
 variable "backend_plan" {
   description = "Render plan for backend service"
   type        = string
-  default     = "free"
+  default     = "starter"
 
   validation {
     condition = contains([
@@ -100,7 +100,7 @@ variable "backend_plan" {
 variable "frontend_plan" {
   description = "Render plan for frontend service"
   type        = string
-  default     = "free"
+  default     = "starter"
 
   validation {
     condition = contains([
@@ -113,7 +113,7 @@ variable "frontend_plan" {
 variable "worker_plan" {
   description = "Render plan for worker service"
   type        = string
-  default     = "free"
+  default     = "starter"
 
   validation {
     condition = contains([
@@ -126,7 +126,7 @@ variable "worker_plan" {
 variable "database_plan" {
   description = "Render plan for PostgreSQL database"
   type        = string
-  default     = "free"
+  default     = "starter"
 
   validation {
     condition = contains([
