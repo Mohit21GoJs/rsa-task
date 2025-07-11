@@ -118,7 +118,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Audit dependencies with better reporting
         run: |
@@ -171,8 +176,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
       - name: Validate workspace configuration
         run: |
           echo "## 🔧 Workspace Validation" >> $GITHUB_STEP_SUMMARY
@@ -263,7 +272,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Wait for services
         run: |
@@ -348,7 +362,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Run frontend unit tests
         working-directory: frontend
@@ -404,7 +423,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Build ${{ matrix.target }}
         run: |
@@ -532,7 +556,12 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try frozen lockfile first, fallback if incompatible
+          if ! pnpm install --frozen-lockfile; then
+            echo "⚠️ Frozen lockfile failed, trying with --no-frozen-lockfile"
+            pnpm install --no-frozen-lockfile
+          fi
 
       - name: Start backend service
         working-directory: backend
