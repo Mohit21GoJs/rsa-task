@@ -126,7 +126,7 @@ variable "worker_plan" {
 variable "database_plan" {
   description = "Render plan for PostgreSQL database"
   type        = string
-  default     = "starter"
+  default     = "basic-256mb"
 
   validation {
     condition = contains([

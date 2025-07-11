@@ -10,7 +10,7 @@ auto_deploy_enabled = true
 backend_plan  = "starter"
 frontend_plan = "starter"
 worker_plan   = "starter"
-database_plan = "starter"
+database_plan = "basic-256mb"
 
 # Instance Configuration - Start with single instances
 backend_instances  = 1
