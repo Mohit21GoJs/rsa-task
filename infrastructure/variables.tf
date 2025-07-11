@@ -126,13 +126,13 @@ variable "worker_plan" {
 variable "database_plan" {
   description = "Render plan for PostgreSQL database"
   type        = string
-  default     = "basic-256mb"
+  default     = "basic_256mb"
 
   validation {
     condition = contains([
-      "basic-256mb", "basic-1gb"
+      "basic_256mb", "basic_1gb"
     ], var.database_plan)
-    error_message = "Database plan must be one of: basic-1gb, basic-256mb."
+    error_message = "Database plan must be one of: basic_1gb, basic_256mb."
   }
 }
 
