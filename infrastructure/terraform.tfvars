@@ -7,10 +7,10 @@ region              = "oregon"
 auto_deploy_enabled = true
 
 # Service Plans - Start with cost-effective plans
-backend_plan  = "starter"
-frontend_plan = "starter"
-worker_plan   = "starter"
-database_plan = "starter"
+backend_plan  = "free"
+frontend_plan = "free"
+worker_plan   = "free"
+database_plan = "free"
 
 # Instance Configuration - Start with single instances
 backend_instances  = 1

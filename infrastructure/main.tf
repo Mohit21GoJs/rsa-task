@@ -77,6 +77,9 @@ resource "render_web_service" "backend" {
     }
   }
 
+  # Environment variables
+  environment_variables = local.secure_backend_env_vars
+
   # Resource limits
   num_instances = var.backend_instances
 
@@ -119,4 +122,122 @@ resource "render_web_service" "frontend" {
 
   # Resource limits
   num_instances = var.frontend_instances
+}
+
+# PostgreSQL Database
+resource "render_postgres" "database" {
+  name     = local.database_name
+  plan     = var.database_plan
+  region   = var.region
+  version  = "16"
+
+  # Database configuration
+  database_name = "job_assistant"
+  database_user = "app_user"
+}
+
+# Temporal Server Service
+resource "render_web_service" "temporal" {
+  name   = "${local.app_name}-temporal"
+  plan   = var.backend_plan # Use same plan as backend
+  region = var.region
+
+  # Runtime source configuration
+  runtime_source = {
+    docker = {
+      auto_deploy = var.auto_deploy_enabled
+      branch      = var.github_branch
+      repo_url    = "https://github.com/Mohit21GoJs/rsa-task"
+      
+      # Use our custom Temporal Docker configuration
+      dockerfile_path = "temporal/Dockerfile"
+      docker_context  = "."
+
+      # GitHub authentication for private repository access
+      github_repo = var.github_access_token != "" ? {
+        access_token = var.github_access_token
+        } : var.github_app_id != "" ? {
+        app_id          = var.github_app_id
+        installation_id = var.github_app_installation_id
+        private_key     = var.github_app_private_key
+      } : null
+    }
+  }
+
+  # Environment variables for Temporal
+  environment_variables = {
+    # Temporal server configuration
+    TEMPORAL_ADDRESS                = "0.0.0.0:7233"
+    TEMPORAL_UI_ADDRESS             = "0.0.0.0:8080"
+    
+    # Database configuration for auto-setup image
+    DB                              = "postgresql"
+    DB_PORT                         = render_postgres.database.port
+    POSTGRES_HOST                   = render_postgres.database.host
+    POSTGRES_PORT                   = render_postgres.database.port
+    POSTGRES_USER                   = render_postgres.database.database_user
+    POSTGRES_PWD                    = render_postgres.database.database_password
+    POSTGRES_DATABASE               = "temporal"
+    
+    # Temporal specific settings
+    TEMPORAL_NAMESPACE              = var.temporal_namespace
+    TEMPORAL_LOG_LEVEL              = "info"
+    TEMPORAL_BIND_ON_IP             = "0.0.0.0"
+    
+    # Enable auto-setup
+    TEMPORAL_AUTO_SETUP             = "true"
+    TEMPORAL_VISIBILITY_AUTO_SETUP  = "true"
+  }
+
+  # Resource limits
+  num_instances = 1
+
+  # Disk for Temporal data
+  disk = {
+    name       = "${local.app_name}-temporal-disk"
+    size_gb    = 1
+    mount_path = "/data"
+  }
+}
+
+# Worker Service
+resource "render_web_service" "worker" {
+  name   = local.worker_service_name
+  plan   = var.worker_plan
+  region = var.region
+
+  start_command = "cd backend && node dist/worker.js"
+
+  # Runtime source configuration with GitHub authentication
+  runtime_source = {
+    native_runtime = {
+      auto_deploy   = var.auto_deploy_enabled
+      branch        = var.github_branch
+      build_command = "pnpm install --frozen-lockfile && pnpm run build:backend"
+      repo_url      = "https://github.com/Mohit21GoJs/rsa-task"
+      runtime       = "node"
+
+      # GitHub authentication for private repository access
+      github_repo = var.github_access_token != "" ? {
+        access_token = var.github_access_token
+        } : var.github_app_id != "" ? {
+        app_id          = var.github_app_id
+        installation_id = var.github_app_installation_id
+        private_key     = var.github_app_private_key
+      } : null
+    }
+  }
+
+  # Environment variables
+  environment_variables = local.secure_worker_env_vars
+
+  # Resource limits
+  num_instances = var.worker_instances
+
+  # Disk configuration
+  disk = {
+    name       = "${local.worker_service_name}-disk"
+    size_gb    = 1
+    mount_path = "/data"
+  }
 } 

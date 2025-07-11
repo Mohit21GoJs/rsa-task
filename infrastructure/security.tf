@@ -37,11 +37,19 @@ locals {
     {
       NODE_ENV               = var.environment == "production" ? "production" : "staging"
       PORT                   = "3000"
-      TEMPORAL_ADDRESS       = var.temporal_address
+      TEMPORAL_ADDRESS       = "${render_web_service.temporal.url}:7233"
       TEMPORAL_NAMESPACE     = var.temporal_namespace
       GEMINI_API_KEY         = var.gemini_api_key
       GRACE_PERIOD_DAYS      = var.grace_period_days
       DEFAULT_DEADLINE_WEEKS = var.default_deadline_weeks
+
+      # Database connection
+      DATABASE_URL           = render_postgres.database.connection_string
+      DATABASE_HOST          = render_postgres.database.host
+      DATABASE_PORT          = render_postgres.database.port
+      DATABASE_NAME          = render_postgres.database.database_name
+      DATABASE_USER          = render_postgres.database.database_user
+      DATABASE_PASSWORD      = render_postgres.database.database_password
 
       # Security settings
       CORS_ORIGINS       = join(",", var.allowed_origins)
@@ -69,4 +77,33 @@ locals {
     # Security settings
     NEXT_PUBLIC_APP_ENV = var.environment
   }
+
+  secure_worker_env_vars = merge(
+    {
+      NODE_ENV               = var.environment == "production" ? "production" : "staging"
+      TEMPORAL_ADDRESS       = "${render_web_service.temporal.url}:7233"
+      TEMPORAL_NAMESPACE     = var.temporal_namespace
+      GEMINI_API_KEY         = var.gemini_api_key
+      GRACE_PERIOD_DAYS      = var.grace_period_days
+      DEFAULT_DEADLINE_WEEKS = var.default_deadline_weeks
+
+      # Database connection
+      DATABASE_URL           = render_postgres.database.connection_string
+      DATABASE_HOST          = render_postgres.database.host
+      DATABASE_PORT          = render_postgres.database.port
+      DATABASE_NAME          = render_postgres.database.database_name
+      DATABASE_USER          = render_postgres.database.database_user
+      DATABASE_PASSWORD      = render_postgres.database.database_password
+
+      # Logging and monitoring
+      LOG_LEVEL              = var.environment == "production" ? "info" : "debug"
+      ENABLE_REQUEST_LOGGING = "true"
+    },
+    var.environment == "production" ? {
+      # Production-only security settings
+      SESSION_SECRET = "auto-generated-secure-secret"
+      JWT_SECRET     = "auto-generated-jwt-secret"
+      ENCRYPTION_KEY = "auto-generated-encryption-key"
+    } : {}
+  )
 } 
