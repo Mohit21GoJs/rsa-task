@@ -65,14 +65,14 @@ resource "render_web_service" "backend" {
       build_command = "pnpm install --frozen-lockfile && pnpm run build:backend"
       repo_url      = var.github_repo_url
       runtime       = "node"
-      
+
       # GitHub authentication for private repository access
       github_repo = var.github_access_token != "" ? {
         access_token = var.github_access_token
-      } : var.github_app_id != "" ? {
-        app_id           = var.github_app_id
-        installation_id  = var.github_app_installation_id
-        private_key      = var.github_app_private_key
+        } : var.github_app_id != "" ? {
+        app_id          = var.github_app_id
+        installation_id = var.github_app_installation_id
+        private_key     = var.github_app_private_key
       } : null
     }
   }
@@ -105,14 +105,14 @@ resource "render_web_service" "frontend" {
       repo_url       = var.github_repo_url
       runtime        = "node"
       root_directory = "frontend"
-      
+
       # GitHub authentication for private repository access
       github_repo = var.github_access_token != "" ? {
         access_token = var.github_access_token
-      } : var.github_app_id != "" ? {
-        app_id           = var.github_app_id
-        installation_id  = var.github_app_installation_id
-        private_key      = var.github_app_private_key
+        } : var.github_app_id != "" ? {
+        app_id          = var.github_app_id
+        installation_id = var.github_app_installation_id
+        private_key     = var.github_app_private_key
       } : null
     }
   }
