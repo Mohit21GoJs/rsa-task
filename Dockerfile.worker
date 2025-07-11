@@ -1,0 +1,58 @@
+# Temporal Worker Dockerfile
+FROM node:18-alpine AS base
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+
+# Copy package files for backend (worker uses backend code)
+COPY backend/package.json backend/pnpm-lock.yaml* ./backend/
+COPY pnpm-workspace.yaml ./
+
+# Install backend dependencies
+WORKDIR /app/backend
+RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm rebuild
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+
+# Copy dependencies
+COPY --from=deps /app/backend/node_modules ./backend/node_modules
+COPY backend/ ./backend/
+
+# Build the backend application
+WORKDIR /app/backend
+RUN pnpm run build
+
+# Production stage
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+# Install only production dependencies
+COPY backend/package.json backend/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
+
+# Copy built application from builder stage
+COPY --from=builder /app/backend/dist ./dist
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S worker -u 1001
+
+# Change ownership of the app directory
+RUN chown -R worker:nodejs /app
+USER worker
+
+# Health check for worker process
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD pgrep -f "temporal-worker" || exit 1
+
+# Start the Temporal worker
+CMD ["node", "dist/worker/temporal-worker.js"] 
