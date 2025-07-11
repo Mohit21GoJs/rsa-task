@@ -9,11 +9,13 @@ import { Application, ApplicationStatus } from './entities/application.entity';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { WorkflowService } from '../workflow/workflow.service';
+import { LlmService } from '../llm/llm.service';
 
 describe('ApplicationsService', () => {
   let service: ApplicationsService;
   let repository: Repository<Application>;
   let workflowService: WorkflowService;
+  let llmService: LlmService;
 
   const mockApplication: Application = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -41,7 +43,12 @@ describe('ApplicationsService', () => {
   const mockWorkflowService = {
     startJobApplicationWorkflow: jest.fn(),
     signalStatusUpdate: jest.fn(),
+    signalNotesUpdate: jest.fn(),
     cancelWorkflow: jest.fn(),
+  };
+
+  const mockLlmService = {
+    generateCoverLetter: jest.fn(),
   };
 
   const mockConfigService = {
@@ -61,6 +68,10 @@ describe('ApplicationsService', () => {
           useValue: mockWorkflowService,
         },
         {
+          provide: LlmService,
+          useValue: mockLlmService,
+        },
+        {
           provide: ConfigService,
           useValue: mockConfigService,
         },
@@ -72,6 +83,7 @@ describe('ApplicationsService', () => {
       getRepositoryToken(Application),
     );
     workflowService = module.get<WorkflowService>(WorkflowService);
+    llmService = module.get<LlmService>(LlmService);
   });
 
   afterEach(() => {
@@ -215,6 +227,84 @@ describe('ApplicationsService', () => {
         order: { createdAt: 'DESC' },
       });
       expect(result).toEqual(applications);
+    });
+  });
+
+  describe('generateCoverLetter', () => {
+    it('should generate cover letter for application', async () => {
+      // Given
+      const mockCoverLetter = 'Generated cover letter content';
+      const updatedApplication = { ...mockApplication, coverLetter: mockCoverLetter };
+      
+      mockRepository.findOne.mockResolvedValue(mockApplication);
+      mockLlmService.generateCoverLetter.mockResolvedValue(mockCoverLetter);
+      mockRepository.save.mockResolvedValue(updatedApplication);
+
+      // When
+      const result = await service.generateCoverLetter(mockApplication.id);
+
+      // Then
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: mockApplication.id },
+      });
+      expect(llmService.generateCoverLetter).toHaveBeenCalledWith({
+        jobDescription: mockApplication.jobDescription,
+        resume: mockApplication.resume,
+        company: mockApplication.company,
+        role: mockApplication.role,
+      });
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ coverLetter: mockCoverLetter })
+      );
+      expect(result).toEqual(updatedApplication);
+    });
+
+    it('should throw NotFoundException when application not found for cover letter generation', async () => {
+      // Given
+      mockRepository.findOne.mockResolvedValue(null);
+
+      // When & Then
+      await expect(service.generateCoverLetter('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return all applications ordered by creation date', async () => {
+      // Given
+      const applications = [mockApplication];
+      mockRepository.find.mockResolvedValue(applications);
+
+      // When
+      const result = await service.findAll();
+
+      // Then
+      expect(repository.find).toHaveBeenCalledWith({
+        order: { createdAt: 'DESC' },
+      });
+      expect(result).toEqual(applications);
+    });
+  });
+
+  describe('getOverdueApplications', () => {
+    it('should return applications that are overdue', async () => {
+      // Given
+      const overdueApplications = [mockApplication];
+      mockRepository.find.mockResolvedValue(overdueApplications);
+
+      // When
+      const result = await service.getOverdueApplications();
+
+      // Then
+      expect(repository.find).toHaveBeenCalledWith({
+        where: {
+          deadline: expect.any(Object), // LessThan object
+          status: ApplicationStatus.PENDING,
+        },
+        order: { deadline: 'ASC' },
+      });
+      expect(result).toEqual(overdueApplications);
     });
   });
 });
