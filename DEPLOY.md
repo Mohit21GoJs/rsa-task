@@ -16,8 +16,9 @@ Your application will be deployed as 4 services on Render.io using Terraform:
 - **📋 Plan Visualization**: See exactly what will change before applying
 - **🔄 Version Control**: All infrastructure changes are tracked in Git
 - **🛡️ Approval Process**: Manual approval required for production deployments
-- **📊 State Management**: Terraform Cloud manages state (no AWS required)
+- **📊 State Management**: Terraform Cloud manages state (**no AWS or S3 required**)
 - **🔁 Reproducible**: Infrastructure can be recreated identically
+- **🚀 Simplified Setup**: No need for AWS accounts, S3 buckets, or DynamoDB tables
 
 ## 📋 Prerequisites
 
@@ -25,7 +26,7 @@ Your application will be deployed as 4 services on Render.io using Terraform:
 
 1. Go to [Terraform Cloud](https://cloud.hashicorp.com/products/terraform)
 2. Create a free account
-3. Create an organization (e.g., "your-company")
+3. Create an organization (e.g., "rsa-task")
 4. Create a workspace named "job-assistant-production"
 5. Generate an API token: Settings → API Tokens → Create API Token
 
@@ -59,6 +60,8 @@ RENDER_API_KEY=rnd_xxxxxxxxxxxxx        # Render.io API key
 GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxx    # Google Gemini API key
 TEMPORAL_ADDRESS=your-temporal-endpoint:7233  # Temporal server
 ```
+
+**Note:** No AWS credentials needed! Terraform Cloud handles all state management automatically.
 
 ## 🚀 Deployment Process
 

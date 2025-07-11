@@ -175,24 +175,13 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      - name: Terraform Init with state locking
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=${{ needs.setup.outputs.environment }}/terraform.tfstate" \
-            -backend-config="region=us-east-1" \
-            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}"
+      - name: Terraform Init
+        run: terraform init
 
       - name: Terraform Validate
         run: terraform validate
@@ -200,10 +189,7 @@ jobs:
       - name: Terraform Plan with detailed output
         run: |
           terraform plan \
-            -var="environment=${{ needs.setup.outputs.environment }}" \
-            -var="deployment_version=${{ needs.setup.outputs.deployment_version }}" \
             -var="render_api_key=${{ secrets.RENDER_API_KEY }}" \
-            -var="database_url=${{ secrets.DATABASE_URL }}" \
             -var="temporal_address=${{ secrets.TEMPORAL_ADDRESS }}" \
             -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}" \
             -detailed-exitcode \
@@ -222,10 +208,7 @@ jobs:
       - name: Terraform Apply with safeguards
         if: github.event_name != 'pull_request'
         run: |
-          # Create backup of current state for rollback
-          terraform state pull > state-backup-$(date +%Y%m%d-%H%M%S).json
-          
-          # Apply changes
+          echo "🚀 Applying infrastructure changes..."
           terraform apply -auto-approve tfplan
 
       - name: Save Terraform outputs
@@ -233,11 +216,9 @@ jobs:
         run: |
           backend_url=$(terraform output -raw backend_url 2>/dev/null || echo "")
           frontend_url=$(terraform output -raw frontend_url 2>/dev/null || echo "")
-          database_url=$(terraform output -raw database_url 2>/dev/null || echo "")
           
           echo "backend_url=$backend_url" >> $GITHUB_OUTPUT
           echo "frontend_url=$frontend_url" >> $GITHUB_OUTPUT
-          echo "database_url=$database_url" >> $GITHUB_OUTPUT
           
           echo "## 🏗️ Infrastructure Outputs" >> $GITHUB_STEP_SUMMARY
           echo "- Backend URL: $backend_url" >> $GITHUB_STEP_SUMMARY

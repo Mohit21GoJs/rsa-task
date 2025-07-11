@@ -1,6 +1,6 @@
 # Infrastructure
 
-This directory contains the Terraform configuration for deploying the Persona Job Assistant application to Render.io.
+This directory contains the Terraform configuration for deploying the Job Application Assistant to Render.io using **Terraform Cloud** for state management.
 
 ## Quick Start
 
@@ -14,39 +14,35 @@ This directory contains the Terraform configuration for deploying the Persona Jo
    terraform version
    ```
 
-2. **Setup AWS Backend**
+2. **Setup Terraform Cloud**
    ```bash
-   # Create S3 bucket for state
-   aws s3 mb s3://persona-job-assistant-terraform-state
-   
-   # Create DynamoDB table for locking
-   aws dynamodb create-table \
-     --table-name terraform-state-lock \
-     --attribute-definitions AttributeName=LockID,AttributeType=S \
-     --key-schema AttributeName=LockID,KeyType=HASH \
-     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+   # Create account at https://cloud.hashicorp.com/products/terraform
+   # Create organization (e.g., "rsa-task")  
+   # Create workspace named "job-assistant-production"
+   # Generate API token: Settings → API Tokens → Create API Token
    ```
 
 3. **Set Environment Variables**
    ```bash
+   export TF_API_TOKEN="your_terraform_cloud_token"
    export RENDER_API_KEY="your_render_api_key"
    export GEMINI_API_KEY="your_gemini_api_key"
-   export TF_STATE_BUCKET="persona-job-assistant-terraform-state"
-   export AWS_REGION="us-east-1"
+   export TEMPORAL_ADDRESS="your_temporal_endpoint:7233"
    ```
 
 4. **Deploy**
    ```bash
-   # From project root
-   chmod +x scripts/deploy.sh
+   # Navigate to infrastructure directory
+   cd infrastructure
    
-   # Deploy to staging
-   ./scripts/deploy.sh staging plan
-   ./scripts/deploy.sh staging apply
+   # Initialize (one-time setup)
+   terraform init
    
-   # Deploy to production
-   ./scripts/deploy.sh production plan
-   ./scripts/deploy.sh production apply
+   # Plan changes
+   terraform plan
+   
+   # Apply changes
+   terraform apply
    ```
 
 ## File Structure
@@ -101,8 +97,10 @@ terraform destroy -var-file="environments/staging.tfvars"
 
 | Variable | Description | Where to Get |
 |----------|-------------|--------------|
+| `TF_API_TOKEN` | Terraform Cloud API token | [Terraform Cloud Settings](https://app.terraform.io/app/settings/tokens) |
 | `RENDER_API_KEY` | Render.io API key | [Render Account Settings](https://dashboard.render.com/account) |
 | `GEMINI_API_KEY` | Google Gemini API key | [Google AI Studio](https://makersuite.google.com/app/apikey) |
+| `TEMPORAL_ADDRESS` | Temporal server endpoint | Your Temporal cluster or `localhost:7233` |
 
 ## Resources Created
 
@@ -115,16 +113,17 @@ terraform destroy -var-file="environments/staging.tfvars"
 
 ### Common Issues
 
-1. **Permission Denied**
+1. **Terraform Cloud Authentication**
    ```bash
-   # Check AWS credentials
-   aws sts get-caller-identity
+   # Check if logged in to Terraform Cloud
+   terraform login
    ```
 
-2. **State Lock Issues**
+2. **Render API Issues**
    ```bash
-   # Force unlock (use carefully)
-   terraform force-unlock <lock-id>
+   # Test Render API key
+   curl -H "Authorization: Bearer $RENDER_API_KEY" \
+        https://api.render.com/v1/services
    ```
 
 3. **Provider Issues**
@@ -133,4 +132,4 @@ terraform destroy -var-file="environments/staging.tfvars"
    terraform init -upgrade
    ```
 
-For more detailed documentation, see [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md). 
+For more detailed documentation, see [../DEPLOY.md](../DEPLOY.md). 

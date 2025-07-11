@@ -176,26 +176,25 @@ fi
 
 ### Problem: Terraform Authentication Failures
 
-**Cause**: Missing or incorrect AWS credentials, Render API key issues.
+**Cause**: Missing or incorrect Terraform Cloud API token, Render API key issues.
 
 **Solutions**:
 1. **Verify GitHub Secrets**:
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
+   - `TF_API_TOKEN`
    - `RENDER_API_KEY`
    - `GEMINI_API_KEY`
 
 2. **Test credentials locally**:
    ```bash
-   # Test AWS credentials
-   aws sts get-caller-identity
+   # Test Terraform Cloud authentication
+   terraform login
    
    # Test Render API key
    curl -H "Authorization: Bearer $RENDER_API_KEY" \
         https://api.render.com/v1/services
    ```
 
-3. **Check IAM permissions** for S3 and DynamoDB access
+3. **Check Terraform Cloud workspace** permissions and organization access
 
 ### Problem: Render Service Creation Failures
 
