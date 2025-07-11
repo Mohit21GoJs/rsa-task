@@ -12,11 +12,12 @@ terraform {
     }
   }
 
-  backend "s3" {
-    # Configuration provided via CLI or environment variables
-    key            = "terraform/state"
-    encrypt        = true
-    dynamodb_table = "terraform-state-lock"
+  # Use Terraform Cloud for state management (simpler than S3)
+  cloud {
+    organization = "rsa-task"
+    workspaces {
+      name = "job-assistant-production"
+    }
   }
 }
 
@@ -30,7 +31,7 @@ resource "random_id" "suffix" {
 }
 
 locals {
-  app_name = "persona-job-assistant"
+  app_name = "job-assistant"
   common_tags = {
     Application = local.app_name
     Environment = var.environment
@@ -38,32 +39,32 @@ locals {
   }
   
   # Service names with environment prefix
-  backend_service_name  = "${var.environment}-${local.app_name}-backend"
-  frontend_service_name = "${var.environment}-${local.app_name}-frontend"
-  worker_service_name   = "${var.environment}-${local.app_name}-worker"
-  database_name        = "${var.environment}-${local.app_name}-db"
+  backend_service_name  = "${local.app_name}-backend"
+  frontend_service_name = "${local.app_name}-frontend"
+  worker_service_name   = "${local.app_name}-worker"
+  database_name        = "${local.app_name}-db"
 }
 
 # PostgreSQL Database
 resource "render_postgres" "database" {
   name               = local.database_name
-  plan               = var.environment == "production" ? "pro" : "starter"
+  plan               = var.database_plan
   region             = var.region
   version            = "15"
   
   # Production databases should have high availability
-  high_availability_enabled = var.environment == "production"
+  high_availability_enabled = var.enable_high_availability
 }
 
 # Backend API Service
 resource "render_web_service" "backend" {
   name         = local.backend_service_name
   runtime      = "node"
-  plan         = var.environment == "production" ? "pro" : "starter"
+  plan         = var.backend_plan
   region       = var.region
   
   repo_url     = var.github_repo_url
-  branch       = var.environment == "production" ? "main" : "develop"
+  branch       = var.github_branch
   
   root_directory = "."
   
@@ -78,7 +79,7 @@ resource "render_web_service" "backend" {
   
   # Environment variables
   env_vars = {
-    NODE_ENV                = var.environment == "production" ? "production" : "staging"
+    NODE_ENV                = "production"
     PORT                   = "3000"
     DATABASE_URL           = render_postgres.database.internal_connection_string
     DATABASE_HOST          = render_postgres.database.host
@@ -94,7 +95,7 @@ resource "render_web_service" "backend" {
   }
   
   # Resource limits
-  num_instances = var.environment == "production" ? 2 : 1
+  num_instances = var.backend_instances
   
   # Disk configuration
   disk = {
@@ -108,40 +109,40 @@ resource "render_web_service" "backend" {
 resource "render_web_service" "frontend" {
   name         = local.frontend_service_name
   runtime      = "node"
-  plan         = var.environment == "production" ? "pro" : "starter"
+  plan         = var.frontend_plan
   region       = var.region
   
   repo_url     = var.github_repo_url
-  branch       = var.environment == "production" ? "main" : "develop"
+  branch       = var.github_branch
   
   root_directory = "frontend"
   
   build_command = "cd .. && pnpm install --frozen-lockfile && pnpm run build:frontend"
-  start_command = "cd frontend && npm start"
+  start_command = "npm start"
   
   # Auto-deploy settings
   auto_deploy = var.auto_deploy_enabled
   
   # Environment variables
   env_vars = {
-    NODE_ENV              = var.environment == "production" ? "production" : "staging"
+    NODE_ENV              = "production"
     NEXT_PUBLIC_API_URL   = "https://${render_web_service.backend.url}"
     PORT                  = "3000"
   }
   
   # Resource limits
-  num_instances = var.environment == "production" ? 2 : 1
+  num_instances = var.frontend_instances
 }
 
 # Temporal Worker Service
 resource "render_background_worker" "worker" {
   name         = local.worker_service_name
   runtime      = "node"
-  plan         = var.environment == "production" ? "pro" : "starter"
+  plan         = var.worker_plan
   region       = var.region
   
   repo_url     = var.github_repo_url
-  branch       = var.environment == "production" ? "main" : "develop"
+  branch       = var.github_branch
   
   root_directory = "."
   
@@ -153,7 +154,7 @@ resource "render_background_worker" "worker" {
   
   # Environment variables (shared with backend)
   env_vars = {
-    NODE_ENV                = var.environment == "production" ? "production" : "staging"
+    NODE_ENV                = "production"
     DATABASE_URL           = render_postgres.database.internal_connection_string
     DATABASE_HOST          = render_postgres.database.host
     DATABASE_PORT          = tostring(render_postgres.database.port)
@@ -168,5 +169,5 @@ resource "render_background_worker" "worker" {
   }
   
   # Resource limits
-  num_instances = var.environment == "production" ? 2 : 1
+  num_instances = var.worker_instances
 } 

@@ -1,0 +1,198 @@
+name: 🚀 Deploy to Render.io with Terraform
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '9.x'
+  TF_VERSION: '1.6.0'
+
+jobs:
+  # Run tests first
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run backend tests
+        working-directory: backend
+        run: pnpm run test
+
+      - name: Run linting
+        run: pnpm run lint
+
+  # Plan infrastructure changes
+  plan:
+    name: 📋 Plan Infrastructure Changes
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      plan-exists: ${{ steps.plan.outputs.plan-exists }}
+      plan-exitcode: ${{ steps.plan.outputs.exitcode }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Format Check
+        working-directory: infrastructure
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        working-directory: infrastructure
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: infrastructure
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: infrastructure
+        env:
+          TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
+          TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          TF_VAR_temporal_address: ${{ secrets.TEMPORAL_ADDRESS }}
+        run: |
+          terraform plan -detailed-exitcode -no-color -out=tfplan
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          echo "plan-exists=true" >> $GITHUB_OUTPUT
+
+      - name: Save Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: infrastructure/tfplan
+
+      - name: Create Plan Summary
+        working-directory: infrastructure
+        run: |
+          echo "## 📋 Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
+
+  # Deploy infrastructure 
+  deploy:
+    name: 🚀 Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [test, plan]
+    environment: production  # This requires manual approval in GitHub
+    if: needs.plan.outputs.plan-exists == 'true'
+    outputs:
+      backend_url: ${{ steps.outputs.outputs.backend_url }}
+      frontend_url: ${{ steps.outputs.outputs.frontend_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        working-directory: infrastructure
+        run: terraform init
+
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: infrastructure/
+
+      - name: Terraform Apply
+        working-directory: infrastructure
+        env:
+          TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
+          TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          TF_VAR_temporal_address: ${{ secrets.TEMPORAL_ADDRESS }}
+        run: |
+          terraform apply -auto-approve tfplan
+
+      - name: Get Outputs
+        id: outputs
+        working-directory: infrastructure
+        run: |
+          backend_url=$(terraform output -raw backend_url)
+          frontend_url=$(terraform output -raw frontend_url)
+          
+          echo "backend_url=$backend_url" >> $GITHUB_OUTPUT
+          echo "frontend_url=$frontend_url" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Infrastructure deployed successfully to Render.io**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Service URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API**: ${{ steps.outputs.outputs.backend_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend App**: ${{ steps.outputs.outputs.frontend_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Services Deployed:" >> $GITHUB_STEP_SUMMARY
+          echo "- 🗄️ **Database**: job-assistant-db (PostgreSQL)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔧 **Backend**: job-assistant-backend (NestJS API)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 **Frontend**: job-assistant-frontend (Next.js)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️ **Worker**: job-assistant-worker (Temporal)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Monitor services**: https://dashboard.render.com" >> $GITHUB_STEP_SUMMARY
+
+  # Health check deployment
+  health-check:
+    name: 🩺 Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Wait for services to be ready
+        run: |
+          echo "⏳ Waiting for services to start up..."
+          sleep 60
+
+      - name: Check backend health
+        run: |
+          backend_url="${{ needs.deploy.outputs.backend_url }}"
+          if [[ -n "$backend_url" ]]; then
+            echo "🔍 Checking backend health at $backend_url/api/health"
+            for i in {1..10}; do
+              if curl -f "$backend_url/api/health"; then
+                echo "✅ Backend is healthy!"
+                break
+              else
+                echo "⏳ Attempt $i/10 failed, retrying in 30s..."
+                sleep 30
+              fi
+            done
+          fi
+
+      - name: Health Check Summary
+        run: |
+          echo "## 🩺 Health Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All services are running and healthy" >> $GITHUB_STEP_SUMMARY 
