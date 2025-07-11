@@ -55,10 +55,12 @@ cloud {
 Go to your GitHub repository → Settings → Secrets and variables → Actions:
 
 ```
-TF_API_TOKEN=tfc_xxxxxxxxxxxxx          # Terraform Cloud API token
-RENDER_API_KEY=rnd_xxxxxxxxxxxxx        # Render.io API key
-GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxx    # Google Gemini API key
-TEMPORAL_ADDRESS=your-temporal-endpoint:7233  # Temporal server
+TF_API_TOKEN=tfc_xxxxxxxxxxxxx               # Terraform Cloud API token
+RENDER_API_KEY=rnd_xxxxxxxxxxxxx             # Render.io API key
+RENDER_OWNER_ID=usr_xxxxxxxxxxxxx            # Render.io Owner ID
+GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxx         # Google Gemini API key
+TEMPORAL_ADDRESS=your-temporal-endpoint:7233 # Temporal server
+GITHUB_ACCESS_TOKEN=github_pat_xxxxxxxxxxxxx # GitHub token for private repos
 ```
 
 **Note:** No AWS credentials needed! Terraform Cloud handles all state management automatically.
@@ -100,8 +102,11 @@ TEMPORAL_ADDRESS=your-temporal-endpoint:7233  # Temporal server
 ```bash
 # 1. Set environment variables
 export TF_VAR_render_api_key="rnd_xxxxxxxxxxxxx"
+export TF_VAR_render_owner_id="usr_xxxxxxxxxxxxx"
 export TF_VAR_gemini_api_key="AIzaxxxxxxxxxxxxxxxxx"
 export TF_VAR_temporal_address="your-temporal-endpoint:7233"
+export TF_VAR_github_access_token="github_pat_xxxxxxxxxxxxx"
+export TF_VAR_github_repo_url="https://github.com/mohityadav/rsa-task"
 
 # 2. Navigate to infrastructure directory
 cd infrastructure

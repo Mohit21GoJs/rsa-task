@@ -50,15 +50,21 @@ The application uses a modern CI/CD pipeline with:
 - pnpm >= 8.x
 - Git
 
-### 3. Required Secrets
-Configure these secrets in your GitHub repository settings:
+## 🔐 Required Secrets
 
-| Secret Name | Description | Example |
-|-------------|-------------|---------|
-| `TF_API_TOKEN` | Terraform Cloud API token | `tfc_xxx...` |
+Add these secrets to your GitHub repository (**Settings** → **Secrets and variables** → **Actions**):
+
+| Secret Name | Description | Example Value |
+|-------------|-------------|---------------|
+| `TF_API_TOKEN` | Terraform Cloud API token | `ATxxxxx...` |
 | `RENDER_API_KEY` | Render.io API key | `rnd_xxx...` |
-| `GEMINI_API_KEY` | Google Gemini API key | `AIza...` |
+| `RENDER_OWNER_ID` | Render.io Owner ID | `usr_xxx...` |
 | `TEMPORAL_ADDRESS` | Temporal server address | `temporal.example.com:7233` |
+| `GEMINI_API_KEY` | Google Gemini API key | `AIxxxxx...` |
+| `GITHUB_ACCESS_TOKEN` | GitHub token for private repo access | `github_pat_xxx...` |
+| `RENDER_BACKEND_SERVICE_ID` | Backend service ID (after first deploy) | `srv_xxx...` |
+| `RENDER_FRONTEND_SERVICE_ID` | Frontend service ID (after first deploy) | `srv_xxx...` |
+| `RENDER_WORKER_SERVICE_ID` | Worker service ID (after first deploy) | `srv_xxx...` |
 
 ## Infrastructure Setup
 
@@ -105,15 +111,15 @@ Use the deployment script for manual deployments:
 
 ```bash
 # Make script executable
-chmod +x scripts/deploy.sh
+chmod +x scripts/deploy-terraform.sh
 
 # Deploy to staging
-./scripts/deploy.sh staging plan
-./scripts/deploy.sh staging apply
+./scripts/deploy-terraform.sh staging plan
+./scripts/deploy-terraform.sh staging apply
 
 # Deploy to production
-./scripts/deploy.sh production plan
-./scripts/deploy.sh production apply
+./scripts/deploy-terraform.sh production plan
+./scripts/deploy-terraform.sh production apply
 ```
 
 ### 2. Automated Deployment

@@ -60,9 +60,12 @@ REQUIREMENTS:
     - Required environment variables set
 
 ENVIRONMENT VARIABLES:
-    TF_VAR_render_api_key     - Render.io API key
-    TF_VAR_gemini_api_key     - Google Gemini API key
-    TF_VAR_temporal_address   - Temporal server address
+    TF_VAR_render_api_key       - Render.io API key
+    TF_VAR_render_owner_id      - Render.io Owner ID
+    TF_VAR_gemini_api_key       - Google Gemini API key
+    TF_VAR_temporal_address     - Temporal server address
+    TF_VAR_github_access_token  - GitHub access token for private repos
+    TF_VAR_github_repo_url      - GitHub repository URL
 
 EOF
 }
@@ -88,12 +91,26 @@ check_requirements() {
         exit 1
     fi
     
+    if [[ -z "${TF_VAR_render_owner_id:-}" ]]; then
+        log_error "TF_VAR_render_owner_id environment variable is required"
+        log_info "Get your Render Owner ID from: https://dashboard.render.com/account/settings"
+        exit 1
+    fi
+    
     if [[ -z "${TF_VAR_gemini_api_key:-}" ]]; then
         log_warning "TF_VAR_gemini_api_key not set - AI features will be disabled"
     fi
     
     if [[ -z "${TF_VAR_temporal_address:-}" ]]; then
         log_warning "TF_VAR_temporal_address not set - using default localhost:7233"
+    fi
+    
+    if [[ -z "${TF_VAR_github_access_token:-}" ]]; then
+        log_warning "TF_VAR_github_access_token not set - GitHub integration will be disabled"
+    fi
+    
+    if [[ -z "${TF_VAR_github_repo_url:-}" ]]; then
+        log_warning "TF_VAR_github_repo_url not set - GitHub integration will be disabled"
     fi
     
     log_success "Requirements check completed"

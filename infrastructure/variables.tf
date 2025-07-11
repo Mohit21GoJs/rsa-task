@@ -35,6 +35,35 @@ variable "github_branch" {
   default     = "main"
 }
 
+# GitHub Authentication for Private Repository Access
+variable "github_access_token" {
+  description = "GitHub personal access token or fine-grained token for private repository access"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "github_app_id" {
+  description = "GitHub App ID for private repository access (alternative to access token)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "github_app_installation_id" {
+  description = "GitHub App Installation ID for private repository access"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "github_app_private_key" {
+  description = "GitHub App private key for authentication"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "region" {
   description = "Render region for service deployment"
   type        = string
