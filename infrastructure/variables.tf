@@ -5,6 +5,11 @@ variable "render_api_key" {
   sensitive   = true
 }
 
+variable "render_owner_id" {
+  description = "Render.com Owner id for managing services"
+  type        = string
+}
+
 variable "environment" {
   description = "Environment name (e.g., development, staging, production)"
   type        = string

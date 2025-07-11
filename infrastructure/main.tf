@@ -22,7 +22,8 @@ terraform {
 }
 
 provider "render" {
-  api_key = var.render_api_key
+  api_key  = var.render_api_key
+  owner_id = var.render_owner_id
 }
 
 # Generate random suffix for unique naming
@@ -47,9 +48,9 @@ locals {
 
 # Backend API Service
 resource "render_web_service" "backend" {
-  name    = local.backend_service_name
-  plan    = var.backend_plan
-  region  = var.region
+  name   = local.backend_service_name
+  plan   = var.backend_plan
+  region = var.region
 
   start_command = "cd backend && node dist/main.js"
 
@@ -80,20 +81,20 @@ resource "render_web_service" "backend" {
 
 # Frontend Service
 resource "render_web_service" "frontend" {
-  name    = local.frontend_service_name
-  plan    = var.frontend_plan
-  region  = var.region
+  name   = local.frontend_service_name
+  plan   = var.frontend_plan
+  region = var.region
 
   start_command = "npm start"
 
   # Runtime source configuration
   runtime_source = {
     native_runtime = {
-      auto_deploy   = var.auto_deploy_enabled
-      branch        = var.github_branch
-      build_command = "cd .. && pnpm install --frozen-lockfile && pnpm run build:frontend"
-      repo_url      = var.github_repo_url
-      runtime       = "node"
+      auto_deploy    = var.auto_deploy_enabled
+      branch         = var.github_branch
+      build_command  = "cd .. && pnpm install --frozen-lockfile && pnpm run build:frontend"
+      repo_url       = var.github_repo_url
+      runtime        = "node"
       root_directory = "frontend"
     }
   }
