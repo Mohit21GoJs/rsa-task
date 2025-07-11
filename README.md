@@ -1,4 +1,4 @@
-# Job Application Assistant
+# Job Application Assistant App
 
 A job application tracking system built with NestJS, Temporal.io workflows, and AI-powered cover letter generation. This is a monorepo containing both backend and frontend applications.
 
