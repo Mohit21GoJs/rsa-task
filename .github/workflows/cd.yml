@@ -190,6 +190,7 @@ jobs:
         run: |
           terraform plan \
             -var="render_api_key=${{ secrets.RENDER_API_KEY }}" \
+            -var="render_owner_id=${{ secrets.RENDER_OWNER_ID }}" \
             -var="temporal_address=${{ secrets.TEMPORAL_ADDRESS }}" \
             -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}" \
             -detailed-exitcode \
