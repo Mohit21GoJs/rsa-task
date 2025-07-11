@@ -63,7 +63,7 @@ resource "render_web_service" "backend" {
       auto_deploy   = var.auto_deploy_enabled
       branch        = var.github_branch
       build_command = "pnpm install --frozen-lockfile && pnpm run build:backend"
-      repo_url      = var.github_repo_url
+      repo_url      = "https://github.com/Mohit21GoJs/rsa-task"
       runtime       = "node"
 
       # GitHub authentication for private repository access
@@ -102,7 +102,7 @@ resource "render_web_service" "frontend" {
       auto_deploy    = var.auto_deploy_enabled
       branch         = var.github_branch
       build_command  = "cd .. && pnpm install --frozen-lockfile && pnpm run build:frontend"
-      repo_url       = var.github_repo_url
+      repo_url       = "https://github.com/Mohit21GoJs/rsa-task"
       runtime        = "node"
       root_directory = "frontend"
 

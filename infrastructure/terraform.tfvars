@@ -1,7 +1,7 @@
 # Production Configuration for Job Assistant
 
 # Core Configuration
-github_repo_url     = "https://github.com/mohityadav/rsa-task"
+github_repo_url     = "https://github.com/mohit21gojs/rsa-task"
 github_branch       = "main"
 region              = "oregon"
 auto_deploy_enabled = true
