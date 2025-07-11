@@ -1,21 +1,21 @@
 output "backend_url" {
   description = "URL of the deployed backend service"
-  value       = "https://${render_web_service.backend.url}"
+  value       = render_web_service.backend.url
 }
 
 output "frontend_url" {
   description = "URL of the deployed frontend service"
-  value       = "https://${render_web_service.frontend.url}"
+  value       = render_web_service.frontend.url
 }
 
 output "temporal_url" {
   description = "URL of the deployed Temporal server"
-  value       = "https://${render_web_service.temporal.url}"
+  value       = render_web_service.temporal.url
 }
 
 output "worker_url" {
   description = "URL of the deployed worker service"
-  value       = "https://${render_web_service.worker.url}"
+  value       = render_web_service.worker.url
 }
 
 output "database_name" {

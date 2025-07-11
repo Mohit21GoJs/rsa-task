@@ -242,6 +242,15 @@ resource "render_env_group" "backend" {
     DATABASE_NAME = {
       value = render_postgres.database.database_name
     }
+    DATABASE_HOST = {
+      value = "dpg-d1oo9eodl3ps73fma79g-a"
+    }
+    DATABASE_PORT = {
+      value = "5432"
+    }
+    DATABASE_USER = {
+      value = render_postgres.database.database_user
+    }
     CORS_ORIGINS = {
       value = join(",", var.allowed_origins)
     }
@@ -294,9 +303,6 @@ resource "render_env_group" "temporal" {
     TEMPORAL_UI_ADDRESS = {
       value = "0.0.0.0:8080"
     }
-    DB = {
-      value = "postgresql"
-    }
     TEMPORAL_NAMESPACE = {
       value = var.temporal_namespace
     }
@@ -311,6 +317,19 @@ resource "render_env_group" "temporal" {
     }
     TEMPORAL_VISIBILITY_AUTO_SETUP = {
       value = "true"
+    }
+    # Database configuration for our custom Temporal config
+    DB_HOST = {
+      value = "dpg-d1oo9eodl3ps73fma79g-a"
+    }
+    DB_PORT = {
+      value = "5432"
+    }
+    DB_NAME = {
+      value = render_postgres.database.database_name
+    }
+    DB_USER = {
+      value = render_postgres.database.database_user
     }
   }
 }
@@ -340,6 +359,15 @@ resource "render_env_group" "worker" {
     }
     DATABASE_NAME = {
       value = render_postgres.database.database_name
+    }
+    DATABASE_HOST = {
+      value = "dpg-d1oo9eodl3ps73fma79g-a"
+    }
+    DATABASE_PORT = {
+      value = "5432"
+    }
+    DATABASE_USER = {
+      value = render_postgres.database.database_user
     }
     LOG_LEVEL = {
       value = var.environment == "production" ? "info" : "debug"
