@@ -130,9 +130,9 @@ variable "database_plan" {
 
   validation {
     condition = contains([
-      "free", "starter", "standard", "pro", "pro-plus"
+      "basic-256mb", "basic-1gb"
     ], var.database_plan)
-    error_message = "Database plan must be one of: free, starter, standard, pro, pro-plus."
+    error_message = "Database plan must be one of: basic-1gb, basic-256mb."
   }
 }
 
