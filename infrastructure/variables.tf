@@ -21,7 +21,7 @@ variable "region" {
   description = "Render region for service deployment"
   type        = string
   default     = "oregon"
-  
+
   validation {
     condition = contains([
       "oregon", "ohio", "virginia", "frankfurt", "singapore"
@@ -41,7 +41,7 @@ variable "backend_plan" {
   description = "Render plan for backend service"
   type        = string
   default     = "starter"
-  
+
   validation {
     condition = contains([
       "starter", "standard", "pro", "pro-plus"
@@ -54,7 +54,7 @@ variable "frontend_plan" {
   description = "Render plan for frontend service"
   type        = string
   default     = "starter"
-  
+
   validation {
     condition = contains([
       "starter", "standard", "pro", "pro-plus"
@@ -67,7 +67,7 @@ variable "worker_plan" {
   description = "Render plan for worker service"
   type        = string
   default     = "starter"
-  
+
   validation {
     condition = contains([
       "starter", "standard", "pro", "pro-plus"
@@ -80,7 +80,7 @@ variable "database_plan" {
   description = "Render plan for PostgreSQL database"
   type        = string
   default     = "starter"
-  
+
   validation {
     condition = contains([
       "starter", "standard", "pro", "pro-plus"
@@ -94,7 +94,7 @@ variable "backend_instances" {
   description = "Number of backend service instances"
   type        = number
   default     = 1
-  
+
   validation {
     condition     = var.backend_instances >= 1 && var.backend_instances <= 10
     error_message = "Backend instances must be between 1 and 10."
@@ -105,7 +105,7 @@ variable "frontend_instances" {
   description = "Number of frontend service instances"
   type        = number
   default     = 1
-  
+
   validation {
     condition     = var.frontend_instances >= 1 && var.frontend_instances <= 10
     error_message = "Frontend instances must be between 1 and 10."
@@ -116,7 +116,7 @@ variable "worker_instances" {
   description = "Number of worker service instances"
   type        = number
   default     = 1
-  
+
   validation {
     condition     = var.worker_instances >= 1 && var.worker_instances <= 5
     error_message = "Worker instances must be between 1 and 5."
