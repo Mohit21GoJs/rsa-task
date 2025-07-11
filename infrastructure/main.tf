@@ -52,7 +52,7 @@ resource "render_web_service" "backend" {
   plan   = var.backend_plan
   region = var.region
 
-  start_command = "cd backend && node dist/main.js"
+  start_command = "cd backend && node dist/src/main.js"
 
   # Health check configuration
   health_check_path = "/api/health"
@@ -178,7 +178,7 @@ resource "render_web_service" "worker" {
   plan   = var.worker_plan
   region = var.region
 
-  start_command = "cd backend && node dist/worker.js"
+  start_command = "cd backend && node dist/src/worker.js"
 
   # Runtime source configuration with GitHub authentication
   runtime_source = {
