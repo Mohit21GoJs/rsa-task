@@ -26,7 +26,7 @@ variable "environment" {
 variable "github_repo_url" {
   description = "GitHub repository URL for the application"
   type        = string
-  default     = "https://github.com/mohityadav/rsa-task"
+  default     = "https://github.com/mohit21gojs/rsa-task"
 }
 
 variable "github_branch" {
