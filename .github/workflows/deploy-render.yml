@@ -82,7 +82,7 @@ jobs:
           TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           TF_VAR_temporal_address: ${{ secrets.TEMPORAL_ADDRESS }}
           TF_VAR_github_access_token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
-          TF_VAR_github_repo_url: ${{ github.server_url }}/${{ github.repository }}
+          TF_VAR_github_repo_url: https://github.com/Mohit21GoJs/rsa-task
         run: |
           terraform plan -detailed-exitcode -no-color -out=tfplan
           echo "exitcode=$?" >> $GITHUB_OUTPUT
@@ -140,7 +140,7 @@ jobs:
           TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           TF_VAR_temporal_address: ${{ secrets.TEMPORAL_ADDRESS }}
           TF_VAR_github_access_token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
-          TF_VAR_github_repo_url: ${{ github.server_url }}/${{ github.repository }}
+          TF_VAR_github_repo_url: https://github.com/Mohit21GoJs/rsa-task
         run: |
           terraform apply -auto-approve tfplan
 
