@@ -87,52 +87,52 @@ variable "auto_deploy_enabled" {
 variable "backend_plan" {
   description = "Render plan for backend service"
   type        = string
-  default     = "starter"
+  default     = "free"
 
   validation {
     condition = contains([
-      "starter", "standard", "pro", "pro-plus"
+      "free", "starter", "standard", "pro", "pro-plus"
     ], var.backend_plan)
-    error_message = "Backend plan must be one of: starter, standard, pro, pro-plus."
+    error_message = "Backend plan must be one of: free, starter, standard, pro, pro-plus."
   }
 }
 
 variable "frontend_plan" {
   description = "Render plan for frontend service"
   type        = string
-  default     = "starter"
+  default     = "free"
 
   validation {
     condition = contains([
-      "starter", "standard", "pro", "pro-plus"
+      "free", "starter", "standard", "pro", "pro-plus"
     ], var.frontend_plan)
-    error_message = "Frontend plan must be one of: starter, standard, pro, pro-plus."
+    error_message = "Frontend plan must be one of: free, starter, standard, pro, pro-plus."
   }
 }
 
 variable "worker_plan" {
   description = "Render plan for worker service"
   type        = string
-  default     = "starter"
+  default     = "free"
 
   validation {
     condition = contains([
-      "starter", "standard", "pro", "pro-plus"
+      "free", "starter", "standard", "pro", "pro-plus"
     ], var.worker_plan)
-    error_message = "Worker plan must be one of: starter, standard, pro, pro-plus."
+    error_message = "Worker plan must be one of: free, starter, standard, pro, pro-plus."
   }
 }
 
 variable "database_plan" {
   description = "Render plan for PostgreSQL database"
   type        = string
-  default     = "starter"
+  default     = "free"
 
   validation {
     condition = contains([
-      "starter", "standard", "pro", "pro-plus"
+      "free", "starter", "standard", "pro", "pro-plus"
     ], var.database_plan)
-    error_message = "Database plan must be one of: starter, standard, pro, pro-plus."
+    error_message = "Database plan must be one of: free, starter, standard, pro, pro-plus."
   }
 }
 
