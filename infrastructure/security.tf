@@ -79,9 +79,7 @@ locals {
   
   secure_frontend_env_vars = {
     NODE_ENV              = var.environment == "production" ? "production" : "staging"
-    NEXT_PUBLIC_API_URL   = var.environment == "production" && length(render_custom_domain.backend_domain) > 0 ? 
-                           "https://${render_custom_domain.backend_domain[0].name}" : 
-                           "https://${render_web_service.backend.url}"
+    NEXT_PUBLIC_API_URL   = var.environment == "production" && length(render_custom_domain.backend_domain) > 0 ? "https://${render_custom_domain.backend_domain[0].name}" : "https://${render_web_service.backend.url}"
     PORT                  = "3000"
     
     # Security settings
