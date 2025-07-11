@@ -59,7 +59,7 @@ export class HealthController {
       };
 
       const allHealthy = Object.values(services).every(
-        service => service === 'healthy' || service === 'configured'
+        (service) => service === 'healthy' || service === 'configured',
       );
 
       return {
@@ -89,19 +89,19 @@ export class HealthController {
   private checkDatabaseConfig(): 'healthy' | 'unhealthy' {
     const dbHost = this.configService.get('DATABASE_HOST');
     const dbUrl = this.configService.get('DATABASE_URL');
-    
-    return (dbHost || dbUrl) ? 'healthy' : 'unhealthy';
+
+    return dbHost || dbUrl ? 'healthy' : 'unhealthy';
   }
 
   private checkTemporalConfig(): 'healthy' | 'unhealthy' {
     const temporalAddress = this.configService.get('TEMPORAL_ADDRESS');
-    
+
     return temporalAddress ? 'healthy' : 'unhealthy';
   }
 
   private checkGeminiConfig(): 'configured' | 'not_configured' {
     const geminiApiKey = this.configService.get('GEMINI_API_KEY');
-    
+
     return geminiApiKey ? 'configured' : 'not_configured';
   }
-} 
+}

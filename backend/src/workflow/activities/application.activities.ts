@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Application, ApplicationStatus } from '../../applications/entities/application.entity';
+import {
+  Application,
+  ApplicationStatus,
+} from '../../applications/entities/application.entity';
 import { LlmService } from '../../llm/llm.service';
 
 export interface CoverLetterInput {
@@ -21,7 +24,9 @@ export interface NotificationInput {
 }
 
 // Activity functions for Temporal workflows
-export async function generateCoverLetter(input: CoverLetterInput): Promise<string> {
+export async function generateCoverLetter(
+  input: CoverLetterInput,
+): Promise<string> {
   // These will be injected by the worker setup
   const applicationRepository = (global as any).applicationRepository;
   const llmService = (global as any).llmService;
@@ -47,11 +52,15 @@ export async function generateCoverLetter(input: CoverLetterInput): Promise<stri
   }
 }
 
-export async function sendNotification(input: NotificationInput): Promise<void> {
+export async function sendNotification(
+  input: NotificationInput,
+): Promise<void> {
   try {
     // In a real implementation, this would send emails, push notifications, etc.
-    console.log(`[${input.type.toUpperCase()}] Application ${input.applicationId}: ${input.message}`);
-    
+    console.log(
+      `[${input.type.toUpperCase()}] Application ${input.applicationId}: ${input.message}`,
+    );
+
     // For now, just log the notification
     // In production, integrate with email service, Slack, etc.
   } catch (error) {
@@ -60,14 +69,16 @@ export async function sendNotification(input: NotificationInput): Promise<void> 
   }
 }
 
-export async function checkApplicationStatus(applicationId: string): Promise<ApplicationStatus> {
+export async function checkApplicationStatus(
+  applicationId: string,
+): Promise<ApplicationStatus> {
   const applicationRepository = (global as any).applicationRepository;
 
   try {
     const application = await applicationRepository.findOne({
       where: { id: applicationId },
     });
-    
+
     if (!application) {
       throw new Error(`Application ${applicationId} not found`);
     }
@@ -87,7 +98,7 @@ export async function archiveApplication(applicationId: string): Promise<void> {
       { id: applicationId },
       { status: ApplicationStatus.ARCHIVED },
     );
-    
+
     console.log(`Application ${applicationId} has been archived`);
   } catch (error) {
     console.error('Failed to archive application:', error);
@@ -95,14 +106,14 @@ export async function archiveApplication(applicationId: string): Promise<void> {
   }
 }
 
-export async function updateApplicationNotes(applicationId: string, notes: string): Promise<void> {
+export async function updateApplicationNotes(
+  applicationId: string,
+  notes: string,
+): Promise<void> {
   const applicationRepository = (global as any).applicationRepository;
 
   try {
-    await applicationRepository.update(
-      { id: applicationId },
-      { notes },
-    );
+    await applicationRepository.update({ id: applicationId }, { notes });
   } catch (error) {
     console.error('Failed to update application notes:', error);
     throw error;
@@ -122,4 +133,4 @@ export class ApplicationActivities {
     (global as any).llmService = this.llmService;
     (global as any).configService = this.configService;
   }
-} 
+}

@@ -5,7 +5,7 @@ import * as activities from '../workflow/activities/application.activities';
 
 async function runWorker() {
   const app = await NestFactory.createApplicationContext(AppModule);
-  
+
   // Initialize the activities class to set up dependency injection
   app.get(activities.ApplicationActivities);
 
@@ -23,4 +23,4 @@ async function runWorker() {
 runWorker().catch((err) => {
   console.error('❌ Worker failed:', err);
   process.exit(1);
-}); 
+});

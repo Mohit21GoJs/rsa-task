@@ -4,7 +4,6 @@ import {
   setHandler,
   sleep,
   proxyActivities,
-  continueAsNew,
   workflowInfo,
 } from '@temporalio/workflow';
 import { ApplicationStatus } from '../../applications/entities/application.entity';
@@ -12,11 +11,13 @@ import { ApplicationStatus } from '../../applications/entities/application.entit
 import type * as activities from '../activities/application.activities';
 
 // Signals for workflow communication
-export const statusUpdateSignal = defineSignal<[ApplicationStatus]>('statusUpdate');
+export const statusUpdateSignal =
+  defineSignal<[ApplicationStatus]>('statusUpdate');
 export const notesUpdateSignal = defineSignal<[string]>('notesUpdate');
 
 // Queries for workflow state inspection
-export const getCurrentStatusQuery = defineQuery<ApplicationStatus>('getCurrentStatus');
+export const getCurrentStatusQuery =
+  defineQuery<ApplicationStatus>('getCurrentStatus');
 export const getWorkflowInfoQuery = defineQuery<any>('getWorkflowInfo');
 
 // Activity proxies
@@ -54,9 +55,11 @@ export async function jobApplicationWorkflow(
   // Set up signal and query handlers
   setHandler(statusUpdateSignal, (newStatus: ApplicationStatus) => {
     currentStatus = newStatus;
-    if (newStatus === ApplicationStatus.REJECTED || 
-        newStatus === ApplicationStatus.WITHDRAWN || 
-        newStatus === ApplicationStatus.OFFER) {
+    if (
+      newStatus === ApplicationStatus.REJECTED ||
+      newStatus === ApplicationStatus.WITHDRAWN ||
+      newStatus === ApplicationStatus.OFFER
+    ) {
       workflowCompleted = true;
     }
   });
@@ -75,7 +78,9 @@ export async function jobApplicationWorkflow(
 
   try {
     // Step 1: Generate cover letter
-    console.log(`Generating cover letter for application ${input.applicationId}`);
+    console.log(
+      `Generating cover letter for application ${input.applicationId}`,
+    );
     await generateCoverLetter({
       applicationId: input.applicationId,
       company: input.company,
@@ -99,7 +104,7 @@ export async function jobApplicationWorkflow(
     if (timeToDeadline > 0) {
       // Sleep until deadline or until status changes
       const sleepPromise = sleep(timeToDeadline);
-      
+
       // Wait for either deadline or workflow completion
       await Promise.race([
         sleepPromise,
@@ -131,7 +136,7 @@ export async function jobApplicationWorkflow(
 
       // Check status after grace period
       const finalStatus = await checkApplicationStatus(input.applicationId);
-      
+
       if (finalStatus === ApplicationStatus.PENDING) {
         // Auto-archive if still pending
         await archiveApplication(input.applicationId);
@@ -145,15 +150,18 @@ export async function jobApplicationWorkflow(
 
     console.log(`Workflow completed for application ${input.applicationId}`);
   } catch (error) {
-    console.error(`Workflow failed for application ${input.applicationId}:`, error);
-    
+    console.error(
+      `Workflow failed for application ${input.applicationId}:`,
+      error,
+    );
+
     // Send error notification
     await sendNotification({
       applicationId: input.applicationId,
       message: `Workflow error for ${input.company} - ${input.role}: ${error.message}`,
       type: 'reminder',
     });
-    
+
     throw error;
   }
-} 
+}

@@ -199,7 +199,7 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
                       {getNotificationIcon(notification.type)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant={getNotificationVariant(notification.type) as any}>
+                          <Badge variant={getNotificationVariant(notification.type)}>
                             {notification.type.replace('_', ' ')}
                           </Badge>
                           {!notification.read && (

@@ -46,10 +46,10 @@ export class Application {
   @Column('timestamp')
   deadline: Date;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Application status',
     enum: ApplicationStatus,
-    default: ApplicationStatus.PENDING 
+    default: ApplicationStatus.PENDING,
   })
   @Column({
     type: 'enum',
@@ -73,4 +73,4 @@ export class Application {
   @ApiProperty({ description: 'Application last update date' })
   @UpdateDateColumn()
   updatedAt: Date;
-} 
+}

@@ -7,12 +7,9 @@ import { Application } from './entities/application.entity';
 import { WorkflowModule } from '../workflow/workflow.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Application]),
-    WorkflowModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Application]), WorkflowModule],
   controllers: [ApplicationsController],
   providers: [ApplicationsService],
   exports: [ApplicationsService],
 })
-export class ApplicationsModule {} 
+export class ApplicationsModule {}

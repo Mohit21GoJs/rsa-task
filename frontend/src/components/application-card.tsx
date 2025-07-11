@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Pencil, Trash2, Calendar, Building2, User } from 'lucide-react'
+import { Pencil, Trash2, Calendar, Building2 } from 'lucide-react'
 import { Application, ApplicationStatus } from '@/lib/types'
 import { formatDate, isOverdue, daysUntilDeadline } from '@/lib/utils'
 import { Button } from '@/components/ui/button'

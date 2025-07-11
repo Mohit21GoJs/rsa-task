@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, Users, ArrowRight } from 'lucide-react'
+import { Check, Users, ArrowRight } from 'lucide-react'
 import { Application, ApplicationStatus } from '@/lib/types'
 import { applicationApi, BulkUpdateDto } from '@/lib/api'
 import { Button } from '@/components/ui/button'

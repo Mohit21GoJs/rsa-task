@@ -8,21 +8,21 @@ export class BulkUpdateItem {
   @IsUUID()
   id: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'New status for the application',
-    enum: ApplicationStatus 
+    enum: ApplicationStatus,
   })
   @IsEnum(ApplicationStatus)
   status: ApplicationStatus;
 }
 
 export class BulkUpdateApplicationDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Array of applications to update',
-    type: [BulkUpdateItem] 
+    type: [BulkUpdateItem],
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => BulkUpdateItem)
   updates: BulkUpdateItem[];
-} 
+}

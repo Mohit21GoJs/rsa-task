@@ -31,7 +31,8 @@ import { HealthModule } from './health/health.module';
         password: String(configService.get('DATABASE_PASSWORD', 'postgres')),
         database: configService.get('DATABASE_NAME', 'job_assistant'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV', 'development') === 'development',
+        synchronize:
+          configService.get('NODE_ENV', 'development') === 'development',
         logging: configService.get('NODE_ENV', 'development') === 'development',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         migrationsRun: false, // Disable auto migration run for now
@@ -49,4 +50,4 @@ import { HealthModule } from './health/health.module';
     HealthModule,
   ],
 })
-export class AppModule {} 
+export class AppModule {}

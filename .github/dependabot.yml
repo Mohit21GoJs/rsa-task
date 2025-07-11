@@ -1,0 +1,201 @@
+version: 2
+updates:
+  # Root workspace dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@core-team"
+    assignees:
+      - "@maintainers"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    groups:
+      # Group major version updates
+      major-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      # Group development dependencies
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "@typescript-eslint/*"
+          - "eslint*"
+          - "prettier"
+          - "jest"
+          - "vitest"
+          - "@testing-library/*"
+        dependency-type: "development"
+      # Group security patches
+      security-patches:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+
+  # Backend dependencies
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@backend-team"
+    commit-message:
+      prefix: "deps(backend)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "automated"
+    groups:
+      # NestJS related packages
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+      # Database related packages
+      database:
+        patterns:
+          - "typeorm"
+          - "pg"
+          - "@types/pg"
+      # Temporal packages
+      temporal:
+        patterns:
+          - "@temporalio/*"
+      # Testing packages
+      testing:
+        patterns:
+          - "jest"
+          - "@types/jest"
+          - "supertest"
+          - "@types/supertest"
+          - "@nestjs/testing"
+        dependency-type: "development"
+
+  # Frontend dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@frontend-team"
+    commit-message:
+      prefix: "deps(frontend)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "automated"
+    groups:
+      # React ecosystem
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      # Next.js related
+      nextjs:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      # UI components
+      ui-components:
+        patterns:
+          - "@radix-ui/*"
+          - "lucide-react"
+          - "class-variance-authority"
+          - "clsx"
+          - "tailwind-merge"
+      # Styling
+      styling:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "postcss"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "@devops-team"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "docker"
+      - "infrastructure"
+      - "automated"
+
+  # Terraform dependencies
+  - package-ecosystem: "terraform"
+    directory: "/infrastructure"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "@devops-team"
+    commit-message:
+      prefix: "terraform"
+      include: "scope"
+    labels:
+      - "terraform"
+      - "infrastructure"
+      - "automated"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "@devops-team"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "ci-cd"
+      - "automated"
+    groups:
+      # Group related actions
+      setup-actions:
+        patterns:
+          - "*setup*"
+          - "*cache*"
+      security-actions:
+        patterns:
+          - "*security*"
+          - "*codeql*"
+          - "*trivy*"
+      deploy-actions:
+        patterns:
+          - "*deploy*"
+          - "*docker*" 

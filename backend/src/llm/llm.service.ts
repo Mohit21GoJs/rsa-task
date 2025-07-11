@@ -16,7 +16,9 @@ export class LlmService {
   constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get('GEMINI_API_KEY');
     if (!apiKey) {
-      console.warn('⚠️  GEMINI_API_KEY not configured. Cover letter generation will be mocked.');
+      console.warn(
+        '⚠️  GEMINI_API_KEY not configured. Cover letter generation will be mocked.',
+      );
     } else {
       this.genAI = new GoogleGenerativeAI(apiKey);
     }
@@ -31,7 +33,7 @@ export class LlmService {
       const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
 
       const prompt = this.buildCoverLetterPrompt(request);
-      
+
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -43,7 +45,7 @@ export class LlmService {
       return text.trim();
     } catch (error) {
       console.error('Failed to generate cover letter with Gemini:', error);
-      
+
       // Fallback to mock generation
       return this.generateMockCoverLetter(request);
     }
@@ -93,7 +95,10 @@ Note: This is a mock cover letter. Please configure GEMINI_API_KEY for AI-genera
     `.trim();
   }
 
-  async improveCoverLetter(originalLetter: string, feedback: string): Promise<string> {
+  async improveCoverLetter(
+    originalLetter: string,
+    feedback: string,
+  ): Promise<string> {
     try {
       if (!this.genAI) {
         return `${originalLetter}\n\n[Improvement suggestions: ${feedback}]`;
@@ -120,4 +125,4 @@ Provide an improved version that addresses the feedback while maintaining a prof
       return originalLetter;
     }
   }
-} 
+}

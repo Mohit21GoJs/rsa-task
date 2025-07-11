@@ -11,6 +11,12 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    rules: {
+      // Disable this rule due to ESLint v9 compatibility issues with TypeScript ESLint v6
+      "@typescript-eslint/no-unsafe-declaration-merging": "off"
+    }
+  }
 ];
 
 export default eslintConfig;

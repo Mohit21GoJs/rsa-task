@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AlertTriangle, Clock, Calendar, ExternalLink } from 'lucide-react'
+import { AlertTriangle, Clock, Calendar } from 'lucide-react'
 import { Application, ApplicationStatus } from '@/lib/types'
 import { applicationApi } from '@/lib/api'
 import { formatDate, isOverdue, daysUntilDeadline } from '@/lib/utils'

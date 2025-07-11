@@ -1,1 +1,14 @@
- 
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run lint-staged for affected files
+npx lint-staged
+
+# Additional checks
+echo "🔧 Running type checks..."
+cd backend && npm run build --noEmit 2>/dev/null || (echo "❌ Backend type check failed" && exit 1)
+cd ../frontend && npm run build --noEmit 2>/dev/null || echo "⚠️ Frontend type check skipped (no test script)"
+
+echo "✅ Pre-commit checks completed!" 

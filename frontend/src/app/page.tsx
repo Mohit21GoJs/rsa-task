@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Filter, RefreshCw, Users, Bell } from 'lucide-react'
+import { Plus, RefreshCw, Users, Bell } from 'lucide-react'
 import { Application, ApplicationStatus } from '@/lib/types'
 import { applicationApi, NotificationEvent } from '@/lib/api'
 import { ApplicationCard } from '@/components/application-card'

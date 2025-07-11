@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, MessageEvent } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  MessageEvent,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -25,7 +30,9 @@ export class ApplicationsService {
     private readonly configService: ConfigService,
   ) {}
 
-  async create(createApplicationDto: CreateApplicationDto): Promise<Application> {
+  async create(
+    createApplicationDto: CreateApplicationDto,
+  ): Promise<Application> {
     try {
       // Generate unique workflow ID
       const workflowId = `job-app-${uuidv4()}`;
@@ -33,7 +40,10 @@ export class ApplicationsService {
       // Calculate deadline if not provided
       const deadline = createApplicationDto.deadline
         ? new Date(createApplicationDto.deadline)
-        : addWeeks(new Date(), parseInt(this.configService.get('DEFAULT_DEADLINE_WEEKS', '4')));
+        : addWeeks(
+            new Date(),
+            parseInt(this.configService.get('DEFAULT_DEADLINE_WEEKS', '4')),
+          );
 
       // Create application entity
       const application = this.applicationRepository.create({
@@ -44,14 +54,17 @@ export class ApplicationsService {
       });
 
       // Save to database
-      const savedApplication = await this.applicationRepository.save(application);
+      const savedApplication =
+        await this.applicationRepository.save(application);
 
       // Start Temporal workflow
       await this.workflowService.startJobApplicationWorkflow(savedApplication);
 
       return savedApplication;
     } catch (error) {
-      throw new BadRequestException('Failed to create application: ' + error.message);
+      throw new BadRequestException(
+        'Failed to create application: ' + error.message,
+      );
     }
   }
 
@@ -62,23 +75,28 @@ export class ApplicationsService {
   }
 
   async findOne(id: string): Promise<Application> {
-    const application = await this.applicationRepository.findOne({ where: { id } });
+    const application = await this.applicationRepository.findOne({
+      where: { id },
+    });
     if (!application) {
       throw new NotFoundException(`Application with ID ${id} not found`);
     }
     return application;
   }
 
-  async bulkUpdate(bulkUpdateDto: BulkUpdateApplicationDto): Promise<Application[]> {
+  async bulkUpdate(
+    bulkUpdateDto: BulkUpdateApplicationDto,
+  ): Promise<Application[]> {
     const updatedApplications: Application[] = [];
 
     for (const update of bulkUpdateDto.updates) {
       try {
         const application = await this.findOne(update.id);
         application.status = update.status;
-        
-        const updatedApplication = await this.applicationRepository.save(application);
-        
+
+        const updatedApplication =
+          await this.applicationRepository.save(application);
+
         // Signal workflow about status change
         await this.workflowService.signalStatusUpdate(
           application.workflowId,
@@ -96,7 +114,6 @@ export class ApplicationsService {
           status: update.status,
           message: `Application status updated to ${update.status}`,
         });
-
       } catch (error) {
         console.error(`Failed to update application ${update.id}:`, error);
       }
@@ -125,13 +142,17 @@ export class ApplicationsService {
   }
 
   // Enhanced update method with notifications
-  async update(id: string, updateApplicationDto: UpdateApplicationDto): Promise<Application> {
+  async update(
+    id: string,
+    updateApplicationDto: UpdateApplicationDto,
+  ): Promise<Application> {
     const application = await this.findOne(id);
     const oldStatus = application.status;
 
     // Update the application
     Object.assign(application, updateApplicationDto);
-    const updatedApplication = await this.applicationRepository.save(application);
+    const updatedApplication =
+      await this.applicationRepository.save(application);
 
     // Signal workflow about status change
     if (updateApplicationDto.status) {
@@ -166,10 +187,10 @@ export class ApplicationsService {
 
   async remove(id: string): Promise<void> {
     const application = await this.findOne(id);
-    
+
     // Cancel workflow
     await this.workflowService.cancelWorkflow(application.workflowId);
-    
+
     // Remove from database
     await this.applicationRepository.remove(application);
   }
@@ -185,7 +206,9 @@ export class ApplicationsService {
     const expiredApplications = await this.applicationRepository
       .createQueryBuilder('application')
       .where('application.deadline < :now', { now: new Date() })
-      .andWhere('application.status = :status', { status: ApplicationStatus.PENDING })
+      .andWhere('application.status = :status', {
+        status: ApplicationStatus.PENDING,
+      })
       .getMany();
 
     if (expiredApplications.length === 0) {
@@ -221,7 +244,7 @@ export class ApplicationsService {
 
     // Add to history
     this.notificationsHistory.push(notificationWithTimestamp);
-    
+
     // Keep history size manageable
     if (this.notificationsHistory.length > this.MAX_HISTORY_SIZE) {
       this.notificationsHistory.shift();
@@ -244,7 +267,7 @@ export class ApplicationsService {
 
     for (const application of upcomingDeadlines) {
       const daysLeft = Math.ceil(
-        (application.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (application.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
       );
 
       if (daysLeft <= 3 && daysLeft > 0) {
@@ -266,4 +289,4 @@ export class ApplicationsService {
       }
     }
   }
-} 
+}

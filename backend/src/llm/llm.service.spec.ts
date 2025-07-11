@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { LlmService, CoverLetterRequest } from './llm.service';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Mock the Google Generative AI module
 jest.mock('@google/generative-ai', () => ({
@@ -41,16 +42,18 @@ describe('LlmService', () => {
     };
 
     describe('when Gemini API is configured', () => {
-      beforeEach(() => {
+      beforeEach(async () => {
         mockConfigService.get.mockReturnValue('mock-api-key');
-        
+
         // Mock GoogleGenerativeAI
-        const { GoogleGenerativeAI } = require('@google/generative-ai');
-        GoogleGenerativeAI.mockImplementation(() => ({
+        // const { GoogleGenerativeAI } = require('@google/generative-ai');
+        (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
           getGenerativeModel: jest.fn().mockReturnValue({
             generateContent: jest.fn().mockResolvedValue({
               response: {
-                text: jest.fn().mockReturnValue('Generated cover letter content'),
+                text: jest
+                  .fn()
+                  .mockReturnValue('Generated cover letter content'),
               },
             }),
           }),
@@ -68,10 +71,11 @@ describe('LlmService', () => {
 
       it('should fallback to mock when API fails', async () => {
         // Given - Mock API to throw error
-        const { GoogleGenerativeAI } = require('@google/generative-ai');
-        GoogleGenerativeAI.mockImplementation(() => ({
+        (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
           getGenerativeModel: jest.fn().mockReturnValue({
-            generateContent: jest.fn().mockRejectedValue(new Error('API Error')),
+            generateContent: jest
+              .fn()
+              .mockRejectedValue(new Error('API Error')),
           }),
         }));
 
@@ -118,20 +122,22 @@ describe('LlmService', () => {
   });
 
   describe('improveCoverLetter', () => {
-    const originalLetter = 'Dear Hiring Manager, I am interested in the position.';
+    const originalLetter =
+      'Dear Hiring Manager, I am interested in the position.';
     const feedback = 'Make it more enthusiastic and specific.';
 
     describe('when Gemini API is configured', () => {
       beforeEach(() => {
         mockConfigService.get.mockReturnValue('mock-api-key');
-        
+
         // Mock GoogleGenerativeAI
-        const { GoogleGenerativeAI } = require('@google/generative-ai');
-        GoogleGenerativeAI.mockImplementation(() => ({
+        (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
           getGenerativeModel: jest.fn().mockReturnValue({
             generateContent: jest.fn().mockResolvedValue({
               response: {
-                text: jest.fn().mockReturnValue('Generated cover letter content'),
+                text: jest
+                  .fn()
+                  .mockReturnValue('Generated cover letter content'),
               },
             }),
           }),
@@ -140,7 +146,10 @@ describe('LlmService', () => {
 
       it('should improve cover letter using Gemini API', async () => {
         // When
-        const result = await service.improveCoverLetter(originalLetter, feedback);
+        const result = await service.improveCoverLetter(
+          originalLetter,
+          feedback,
+        );
 
         // Then
         expect(result).toBe('Generated cover letter content');
@@ -154,7 +163,10 @@ describe('LlmService', () => {
 
       it('should return original letter with feedback', async () => {
         // When
-        const result = await service.improveCoverLetter(originalLetter, feedback);
+        const result = await service.improveCoverLetter(
+          originalLetter,
+          feedback,
+        );
 
         // Then
         expect(result).toContain(originalLetter);
@@ -162,4 +174,4 @@ describe('LlmService', () => {
       });
     });
   });
-}); 
+});

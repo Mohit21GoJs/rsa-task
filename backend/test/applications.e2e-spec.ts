@@ -5,26 +5,15 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { AppModule } from '../src/app.module';
-import { Application, ApplicationStatus } from '../src/applications/entities/application.entity';
+import {
+  Application,
+  ApplicationStatus,
+} from '../src/applications/entities/application.entity';
 import { WorkflowService } from '../src/workflow/workflow.service';
 import { LlmService } from '../src/llm/llm.service';
 
 describe('ApplicationsController (e2e)', () => {
   let app: INestApplication;
-  let repository: Repository<Application>;
-
-  const mockApplication: Application = {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    company: 'Google',
-    role: 'Software Engineer',
-    jobDescription: 'Great opportunity to work with cutting-edge technology',
-    resume: 'Experienced software engineer with 5+ years',
-    deadline: new Date('2024-03-15'),
-    status: ApplicationStatus.PENDING,
-    workflowId: 'job-app-123',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   // Mock services
   const mockWorkflowService = {
@@ -50,12 +39,12 @@ describe('ApplicationsController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Set global prefix (same as in main.ts)
     app.setGlobalPrefix('api');
-    
-    repository = moduleFixture.get<Repository<Application>>(getRepositoryToken(Application));
-    
+
+    moduleFixture.get<Repository<Application>>(getRepositoryToken(Application));
+
     await app.init();
   });
 
@@ -158,4 +147,4 @@ describe('ApplicationsController (e2e)', () => {
         });
     });
   });
-}); 
+});

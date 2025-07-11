@@ -14,7 +14,6 @@ describe('ApplicationsService', () => {
   let service: ApplicationsService;
   let repository: Repository<Application>;
   let workflowService: WorkflowService;
-  let configService: ConfigService;
 
   const mockApplication: Application = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -69,9 +68,10 @@ describe('ApplicationsService', () => {
     }).compile();
 
     service = module.get<ApplicationsService>(ApplicationsService);
-    repository = module.get<Repository<Application>>(getRepositoryToken(Application));
+    repository = module.get<Repository<Application>>(
+      getRepositoryToken(Application),
+    );
     workflowService = module.get<WorkflowService>(WorkflowService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -91,7 +91,9 @@ describe('ApplicationsService', () => {
       mockConfigService.get.mockReturnValue('4');
       mockRepository.create.mockReturnValue(mockApplication);
       mockRepository.save.mockResolvedValue(mockApplication);
-      mockWorkflowService.startJobApplicationWorkflow.mockResolvedValue(undefined);
+      mockWorkflowService.startJobApplicationWorkflow.mockResolvedValue(
+        undefined,
+      );
 
       // When
       const result = await service.create(createDto);
@@ -107,7 +109,9 @@ describe('ApplicationsService', () => {
         }),
       );
       expect(repository.save).toHaveBeenCalledWith(mockApplication);
-      expect(workflowService.startJobApplicationWorkflow).toHaveBeenCalledWith(mockApplication);
+      expect(workflowService.startJobApplicationWorkflow).toHaveBeenCalledWith(
+        mockApplication,
+      );
       expect(result).toEqual(mockApplication);
     });
 
@@ -118,7 +122,9 @@ describe('ApplicationsService', () => {
       mockRepository.save.mockRejectedValue(new Error('Database error'));
 
       // When & Then
-      await expect(service.create(createDto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(createDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -131,7 +137,9 @@ describe('ApplicationsService', () => {
       const result = await service.findOne(mockApplication.id);
 
       // Then
-      expect(repository.findOne).toHaveBeenCalledWith({ where: { id: mockApplication.id } });
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: mockApplication.id },
+      });
       expect(result).toEqual(mockApplication);
     });
 
@@ -140,7 +148,9 @@ describe('ApplicationsService', () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       // When & Then
-      await expect(service.findOne('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -183,7 +193,9 @@ describe('ApplicationsService', () => {
       await service.remove(mockApplication.id);
 
       // Then
-      expect(workflowService.cancelWorkflow).toHaveBeenCalledWith(mockApplication.workflowId);
+      expect(workflowService.cancelWorkflow).toHaveBeenCalledWith(
+        mockApplication.workflowId,
+      );
       expect(repository.remove).toHaveBeenCalledWith(mockApplication);
     });
   });
@@ -205,4 +217,4 @@ describe('ApplicationsService', () => {
       expect(result).toEqual(applications);
     });
   });
-}); 
+});

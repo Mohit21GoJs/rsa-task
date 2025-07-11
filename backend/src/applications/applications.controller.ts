@@ -40,7 +40,9 @@ export class ApplicationsController {
     type: Application,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  create(@Body() createApplicationDto: CreateApplicationDto): Promise<Application> {
+  create(
+    @Body() createApplicationDto: CreateApplicationDto,
+  ): Promise<Application> {
     return this.applicationsService.create(createApplicationDto);
   }
 
@@ -103,7 +105,9 @@ export class ApplicationsController {
     type: [Application],
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async bulkUpdate(@Body() bulkUpdateDto: BulkUpdateApplicationDto): Promise<Application[]> {
+  async bulkUpdate(
+    @Body() bulkUpdateDto: BulkUpdateApplicationDto,
+  ): Promise<Application[]> {
     return this.applicationsService.bulkUpdate(bulkUpdateDto);
   }
 
@@ -159,4 +163,4 @@ export class ApplicationsController {
   remove(@Param('id') id: string): Promise<void> {
     return this.applicationsService.remove(id);
   }
-} 
+}

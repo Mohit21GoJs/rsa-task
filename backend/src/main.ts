@@ -27,7 +27,9 @@ async function bootstrap() {
   // Swagger documentation setup
   const config = new DocumentBuilder()
     .setTitle('Job Application Assistant API')
-    .setDescription('API for managing job applications with Temporal.io workflows')
+    .setDescription(
+      'API for managing job applications with Temporal.io workflows',
+    )
     .setVersion('1.0')
     .addTag('applications', 'Job application management')
     .addTag('workflow', 'Workflow operations')
@@ -38,9 +40,9 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
+
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }
 
-bootstrap(); 
+bootstrap();

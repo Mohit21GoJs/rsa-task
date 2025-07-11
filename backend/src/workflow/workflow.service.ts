@@ -1,8 +1,15 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client, Connection, WorkflowHandle } from '@temporalio/client';
-import { Application, ApplicationStatus } from '../applications/entities/application.entity';
-import { jobApplicationWorkflow, statusUpdateSignal, notesUpdateSignal } from './workflows/job-application.workflow';
+import {
+  Application,
+  ApplicationStatus,
+} from '../applications/entities/application.entity';
+import {
+  jobApplicationWorkflow,
+  statusUpdateSignal,
+  notesUpdateSignal,
+} from './workflows/job-application.workflow';
 
 @Injectable()
 export class WorkflowService implements OnModuleInit, OnModuleDestroy {
@@ -38,7 +45,9 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async startJobApplicationWorkflow(application: Application): Promise<WorkflowHandle> {
+  async startJobApplicationWorkflow(
+    application: Application,
+  ): Promise<WorkflowHandle> {
     try {
       const handle = await this.client.workflow.start(jobApplicationWorkflow, {
         taskQueue: 'job-application-queue',
@@ -69,12 +78,17 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async signalStatusUpdate(workflowId: string, status: ApplicationStatus): Promise<void> {
+  async signalStatusUpdate(
+    workflowId: string,
+    status: ApplicationStatus,
+  ): Promise<void> {
     try {
       const handle = this.client.workflow.getHandle(workflowId);
       await handle.signal(statusUpdateSignal, status);
-      
-      console.log(`📡 Sent status update signal to workflow ${workflowId}: ${status}`);
+
+      console.log(
+        `📡 Sent status update signal to workflow ${workflowId}: ${status}`,
+      );
     } catch (error) {
       console.error('Failed to send status update signal:', error);
       throw error;
@@ -85,7 +99,7 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
     try {
       const handle = this.client.workflow.getHandle(workflowId);
       await handle.signal(notesUpdateSignal, notes);
-      
+
       console.log(`📡 Sent notes update signal to workflow ${workflowId}`);
     } catch (error) {
       console.error('Failed to send notes update signal:', error);
@@ -97,7 +111,7 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
     try {
       const handle = this.client.workflow.getHandle(workflowId);
       await handle.cancel();
-      
+
       console.log(`🛑 Cancelled workflow ${workflowId}`);
     } catch (error) {
       console.error('Failed to cancel workflow:', error);
@@ -109,7 +123,7 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
     try {
       const handle = this.client.workflow.getHandle(workflowId);
       const result = await handle.query('getWorkflowInfo');
-      
+
       return result;
     } catch (error) {
       console.error('Failed to get workflow status:', error);
@@ -126,4 +140,4 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
       throw error;
     }
   }
-} 
+}
