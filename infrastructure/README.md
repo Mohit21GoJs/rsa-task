@@ -1,135 +1,131 @@
-# Infrastructure
+# Infrastructure Setup
 
-This directory contains the Terraform configuration for deploying the Job Application Assistant to Render.io using **Terraform Cloud** for state management.
+This directory contains Terraform configuration for deploying the RSA Task application to Render.
 
-## Quick Start
+## Prerequisites
 
-1. **Prerequisites**
-   ```bash
-   # Install Terraform
-   brew install terraform  # macOS
-   # or download from https://terraform.io/downloads
-   
-   # Verify installation
-   terraform version
-   ```
+### 1. Render Account Setup
+- Create a Render account and obtain API credentials
+- Set up the required environment variables for Terraform
 
-2. **Setup Terraform Cloud**
-   ```bash
-   # Create account at https://cloud.hashicorp.com/products/terraform
-   # Create organization (e.g., "rsa-task")  
-   # Create workspace named "job-assistant-production"
-   # Generate API token: Settings → API Tokens → Create API Token
-   ```
+### 2. Terraform Variables
 
-3. **Set Environment Variables**
-   ```bash
-   export TF_API_TOKEN="your_terraform_cloud_token"
-   export RENDER_API_KEY="your_render_api_key"
-   export GEMINI_API_KEY="your_gemini_api_key"
-   export TEMPORAL_ADDRESS="your_temporal_endpoint:7233"
-   ```
+Create a `terraform.tfvars` file with your specific values:
 
-4. **Deploy**
-   ```bash
-   # Navigate to infrastructure directory
-   cd infrastructure
-   
-   # Initialize (one-time setup)
-   terraform init
-   
-   # Plan changes
-   terraform plan
-   
-   # Apply changes
-   terraform apply
-   ```
+```hcl
+# Render Configuration
+render_api_key = "your-render-api-key"
+render_owner_id = "your-render-owner-id"
 
-## File Structure
+# GitHub Configuration
+github_access_token = "your-github-token"
+# OR use GitHub App (recommended for production)
+github_app_id = "your-github-app-id"
+github_app_installation_id = "your-installation-id"
+github_app_private_key = "your-private-key"
 
-```
-infrastructure/
-├── main.tf                 # Main Terraform configuration
-├── variables.tf            # Variable definitions
-├── outputs.tf              # Output definitions
-├── security.tf             # Security configurations
-├── .terraform.lock.hcl     # Provider version lock
-├── environments/
-│   ├── staging.tfvars      # Staging environment variables
-│   └── production.tfvars   # Production environment variables
-└── README.md               # This file
+# Application Configuration
+environment = "production"
+gemini_api_key = "your-gemini-api-key"
+temporal_namespace = "default"
+allowed_origins = ["https://your-frontend-domain.com"]
+
+# Resource Configuration
+backend_plan = "starter"
+frontend_plan = "starter"
+worker_plan = "starter"
+database_plan = "starter"
+
+# Optional Configuration
+grace_period_days = 7
+default_deadline_weeks = 2
+auto_deploy_enabled = true
+github_branch = "main"
 ```
 
-## Environments
+## Deployment Process
 
-### Staging
-- **URL**: Auto-generated Render URLs
-- **Resources**: Starter plans
-- **Auto-deploy**: Enabled
-- **Cost**: ~$21/month
+1. **Initialize Terraform**: `terraform init`
+2. **Plan Deployment**: `terraform plan`
+3. **Apply Configuration**: `terraform apply`
 
-### Production
-- **URL**: Custom domains (optional)
-- **Resources**: Pro plans with HA
-- **Auto-deploy**: Disabled
-- **Cost**: ~$175/month
+The Terraform configuration will automatically:
+- Create all the required services
+- Create environment groups with all necessary variables
+- Link environment groups to their respective services
+- Set up proper dependencies between services
 
-## Manual Commands
+## Environment Groups Created
 
-```bash
-# Initialize
-terraform init
+The following environment groups are automatically created and managed by Terraform:
 
-# Plan changes
-terraform plan -var-file="environments/staging.tfvars"
+### 1. Backend Environment Group (`job-assistant-backend-env`)
+- `NODE_ENV`: production/staging
+- `PORT`: 3000
+- `TEMPORAL_ADDRESS`: Automatically set to temporal service URL
+- `TEMPORAL_NAMESPACE`: From variables
+- `GEMINI_API_KEY`: From variables
+- `GRACE_PERIOD_DAYS`: From variables
+- `DEFAULT_DEADLINE_WEEKS`: From variables
+- `DATABASE_NAME`: Automatically set to database name
+- `CORS_ORIGINS`: From allowed_origins variable
+- `TRUST_PROXY`: true
+- `HELMET_ENABLED`: true
+- `RATE_LIMIT_ENABLED`: Environment-dependent
+- `LOG_LEVEL`: Environment-dependent
+- `ENABLE_REQUEST_LOGGING`: true
 
-# Apply changes
-terraform apply
+### 2. Frontend Environment Group (`job-assistant-frontend-env`)
+- `NODE_ENV`: production/staging
+- `NEXT_PUBLIC_API_URL`: Automatically set to backend service URL
+- `PORT`: 3000
+- `NEXT_PUBLIC_APP_ENV`: From environment variable
 
-# Show outputs
-terraform output
+### 3. Temporal Environment Group (`job-assistant-temporal-env`)
+- `TEMPORAL_ADDRESS`: 0.0.0.0:7233
+- `TEMPORAL_UI_ADDRESS`: 0.0.0.0:8080
+- `DB`: postgresql
+- `TEMPORAL_NAMESPACE`: From variables
+- `TEMPORAL_LOG_LEVEL`: info
+- `TEMPORAL_BIND_ON_IP`: 0.0.0.0
+- `TEMPORAL_AUTO_SETUP`: true
+- `TEMPORAL_VISIBILITY_AUTO_SETUP`: true
 
-# Destroy (careful!)
-terraform destroy -var-file="environments/staging.tfvars"
-```
+### 4. Worker Environment Group (`job-assistant-worker-env`)
+- `NODE_ENV`: production/staging
+- `TEMPORAL_ADDRESS`: Automatically set to temporal service URL
+- `TEMPORAL_NAMESPACE`: From variables
+- `GEMINI_API_KEY`: From variables
+- `GRACE_PERIOD_DAYS`: From variables
+- `DEFAULT_DEADLINE_WEEKS`: From variables
+- `DATABASE_NAME`: Automatically set to database name
+- `LOG_LEVEL`: Environment-dependent
+- `ENABLE_REQUEST_LOGGING`: true
 
-## Required Secrets
+## Architecture
 
-| Variable | Description | Where to Get |
-|----------|-------------|--------------|
-| `TF_API_TOKEN` | Terraform Cloud API token | [Terraform Cloud Settings](https://app.terraform.io/app/settings/tokens) |
-| `RENDER_API_KEY` | Render.io API key | [Render Account Settings](https://dashboard.render.com/account) |
-| `GEMINI_API_KEY` | Google Gemini API key | [Google AI Studio](https://makersuite.google.com/app/apikey) |
-| `TEMPORAL_ADDRESS` | Temporal server endpoint | Your Temporal cluster or `localhost:7233` |
+The infrastructure includes:
+- **Backend API Service**: Node.js REST API
+- **Frontend Service**: Next.js web application
+- **Temporal Service**: Workflow orchestration
+- **Worker Service**: Background job processing
+- **PostgreSQL Database**: Data storage
+- **Environment Groups**: Centralized environment variable management
 
-## Resources Created
+## Environment Variables Management
 
-- **Web Services**: Frontend (Next.js) and Backend (NestJS)
-- **Background Worker**: Temporal worker for job processing
-- **Database**: PostgreSQL with automatic backups
-- **Custom Domains**: Production only (optional)
+This setup uses Render's Environment Groups feature through Terraform, which provides:
+- **Fully automated setup**: No manual configuration required
+- **Centralized management**: All variables managed in one place
+- **Automatic linking**: Environment groups are automatically linked to services
+- **Dynamic values**: Service URLs and database names are automatically populated
+- **Version control**: Environment configuration is tracked in Git
+- **Reproducible deployments**: Same configuration can be deployed to multiple environments
 
-## Troubleshooting
+## Security Considerations
 
-### Common Issues
-
-1. **Terraform Cloud Authentication**
-   ```bash
-   # Check if logged in to Terraform Cloud
-   terraform login
-   ```
-
-2. **Render API Issues**
-   ```bash
-   # Test Render API key
-   curl -H "Authorization: Bearer $RENDER_API_KEY" \
-        https://api.render.com/v1/services
-   ```
-
-3. **Provider Issues**
-   ```bash
-   # Reinitialize providers
-   terraform init -upgrade
-   ```
-
-For more detailed documentation, see [../DEPLOY.md](../DEPLOY.md). 
+- All sensitive variables should be stored in `terraform.tfvars` (not committed to Git)
+- Use GitHub App authentication for production deployments
+- The configuration automatically enables security headers and rate limiting in production
+- Regularly rotate API keys and secrets
+- Consider using Terraform Cloud or similar for secure variable storage in CI/CD 

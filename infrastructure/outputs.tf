@@ -18,17 +18,6 @@ output "worker_url" {
   value       = "https://${render_web_service.worker.url}"
 }
 
-output "database_connection_string" {
-  description = "PostgreSQL database connection string"
-  value       = render_postgres.database.connection_string
-  sensitive   = true
-}
-
-output "database_host" {
-  description = "PostgreSQL database host"
-  value       = render_postgres.database.host
-}
-
 output "database_name" {
   description = "PostgreSQL database name"
   value       = render_postgres.database.database_name
@@ -57,6 +46,26 @@ output "worker_service_id" {
 output "database_id" {
   description = "Render database ID"
   value       = render_postgres.database.id
+}
+
+output "backend_env_group_id" {
+  description = "Environment group ID for the backend service"
+  value       = render_env_group.backend.id
+}
+
+output "frontend_env_group_id" {
+  description = "Environment group ID for the frontend service"
+  value       = render_env_group.frontend.id
+}
+
+output "temporal_env_group_id" {
+  description = "Environment group ID for the Temporal service"
+  value       = render_env_group.temporal.id
+}
+
+output "worker_env_group_id" {
+  description = "Environment group ID for the worker service"
+  value       = render_env_group.worker.id
 }
 
 output "environment" {

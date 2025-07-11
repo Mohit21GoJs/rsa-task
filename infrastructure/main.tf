@@ -77,9 +77,6 @@ resource "render_web_service" "backend" {
     }
   }
 
-  # Environment variables
-  environment_variables = local.secure_backend_env_vars
-
   # Resource limits
   num_instances = var.backend_instances
 
@@ -164,31 +161,6 @@ resource "render_web_service" "temporal" {
     }
   }
 
-  # Environment variables for Temporal
-  environment_variables = {
-    # Temporal server configuration
-    TEMPORAL_ADDRESS    = "0.0.0.0:7233"
-    TEMPORAL_UI_ADDRESS = "0.0.0.0:8080"
-
-    # Database configuration for auto-setup image
-    DB                = "postgresql"
-    DB_PORT           = render_postgres.database.port
-    POSTGRES_HOST     = render_postgres.database.host
-    POSTGRES_PORT     = render_postgres.database.port
-    POSTGRES_USER     = render_postgres.database.database_user
-    POSTGRES_PWD      = render_postgres.database.database_password
-    POSTGRES_DATABASE = "temporal"
-
-    # Temporal specific settings
-    TEMPORAL_NAMESPACE  = var.temporal_namespace
-    TEMPORAL_LOG_LEVEL  = "info"
-    TEMPORAL_BIND_ON_IP = "0.0.0.0"
-
-    # Enable auto-setup
-    TEMPORAL_AUTO_SETUP            = "true"
-    TEMPORAL_VISIBILITY_AUTO_SETUP = "true"
-  }
-
   # Resource limits
   num_instances = 1
 
@@ -228,9 +200,6 @@ resource "render_web_service" "worker" {
     }
   }
 
-  # Environment variables
-  environment_variables = local.secure_worker_env_vars
-
   # Resource limits
   num_instances = var.worker_instances
 
@@ -240,4 +209,164 @@ resource "render_web_service" "worker" {
     size_gb    = 1
     mount_path = "/data"
   }
+}
+
+# Environment Groups with Variables
+
+# Backend Environment Group
+resource "render_env_group" "backend" {
+  name = "${local.backend_service_name}-env"
+
+  env_vars = {
+    NODE_ENV = {
+      value = var.environment == "production" ? "production" : "staging"
+    }
+    PORT = {
+      value = "3000"
+    }
+    TEMPORAL_ADDRESS = {
+      value = "${render_web_service.temporal.url}:7233"
+    }
+    TEMPORAL_NAMESPACE = {
+      value = var.temporal_namespace
+    }
+    GEMINI_API_KEY = {
+      value = var.gemini_api_key
+    }
+    GRACE_PERIOD_DAYS = {
+      value = tostring(var.grace_period_days)
+    }
+    DEFAULT_DEADLINE_WEEKS = {
+      value = tostring(var.default_deadline_weeks)
+    }
+    DATABASE_NAME = {
+      value = render_postgres.database.database_name
+    }
+    CORS_ORIGINS = {
+      value = join(",", var.allowed_origins)
+    }
+    TRUST_PROXY = {
+      value = "true"
+    }
+    HELMET_ENABLED = {
+      value = "true"
+    }
+    RATE_LIMIT_ENABLED = {
+      value = var.environment == "production" ? "true" : "false"
+    }
+    LOG_LEVEL = {
+      value = var.environment == "production" ? "info" : "debug"
+    }
+    ENABLE_REQUEST_LOGGING = {
+      value = "true"
+    }
+  }
+}
+
+# Frontend Environment Group
+resource "render_env_group" "frontend" {
+  name = "${local.frontend_service_name}-env"
+
+  env_vars = {
+    NODE_ENV = {
+      value = var.environment == "production" ? "production" : "staging"
+    }
+    NEXT_PUBLIC_API_URL = {
+      value = "https://${render_web_service.backend.url}"
+    }
+    PORT = {
+      value = "3000"
+    }
+    NEXT_PUBLIC_APP_ENV = {
+      value = var.environment
+    }
+  }
+}
+
+# Temporal Environment Group
+resource "render_env_group" "temporal" {
+  name = "${local.app_name}-temporal-env"
+
+  env_vars = {
+    TEMPORAL_ADDRESS = {
+      value = "0.0.0.0:7233"
+    }
+    TEMPORAL_UI_ADDRESS = {
+      value = "0.0.0.0:8080"
+    }
+    DB = {
+      value = "postgresql"
+    }
+    TEMPORAL_NAMESPACE = {
+      value = var.temporal_namespace
+    }
+    TEMPORAL_LOG_LEVEL = {
+      value = "info"
+    }
+    TEMPORAL_BIND_ON_IP = {
+      value = "0.0.0.0"
+    }
+    TEMPORAL_AUTO_SETUP = {
+      value = "true"
+    }
+    TEMPORAL_VISIBILITY_AUTO_SETUP = {
+      value = "true"
+    }
+  }
+}
+
+# Worker Environment Group
+resource "render_env_group" "worker" {
+  name = "${local.worker_service_name}-env"
+
+  env_vars = {
+    NODE_ENV = {
+      value = var.environment == "production" ? "production" : "staging"
+    }
+    TEMPORAL_ADDRESS = {
+      value = "${render_web_service.temporal.url}:7233"
+    }
+    TEMPORAL_NAMESPACE = {
+      value = var.temporal_namespace
+    }
+    GEMINI_API_KEY = {
+      value = var.gemini_api_key
+    }
+    GRACE_PERIOD_DAYS = {
+      value = tostring(var.grace_period_days)
+    }
+    DEFAULT_DEADLINE_WEEKS = {
+      value = tostring(var.default_deadline_weeks)
+    }
+    DATABASE_NAME = {
+      value = render_postgres.database.database_name
+    }
+    LOG_LEVEL = {
+      value = var.environment == "production" ? "info" : "debug"
+    }
+    ENABLE_REQUEST_LOGGING = {
+      value = "true"
+    }
+  }
+}
+
+# Environment Group Links
+resource "render_env_group_link" "backend" {
+  env_group_id = render_env_group.backend.id
+  service_ids  = [render_web_service.backend.id]
+}
+
+resource "render_env_group_link" "frontend" {
+  env_group_id = render_env_group.frontend.id
+  service_ids  = [render_web_service.frontend.id]
+}
+
+resource "render_env_group_link" "temporal" {
+  env_group_id = render_env_group.temporal.id
+  service_ids  = [render_web_service.temporal.id]
+}
+
+resource "render_env_group_link" "worker" {
+  env_group_id = render_env_group.worker.id
+  service_ids  = [render_web_service.worker.id]
 } 
