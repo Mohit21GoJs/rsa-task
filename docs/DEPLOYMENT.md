@@ -9,6 +9,7 @@ The application uses a modern CI/CD pipeline with:
 - **Terraform** for infrastructure as code
 - **Render.io** as the hosting platform
 - **Multi-environment** support (staging/production)
+- **Comprehensive security scanning** (see [Security Scanning Guide](./SECURITY-SCANNING.md))
 
 ## Architecture
 
