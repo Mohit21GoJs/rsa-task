@@ -149,6 +149,12 @@ jobs:
             pnpm install --no-frozen-lockfile
           fi
 
+      - name: Validate ESLint configuration
+        run: |
+          echo "🔍 Validating ESLint configurations..."
+          cd backend && npx eslint --print-config src/main.ts > /dev/null && echo "✅ Backend ESLint config valid"
+          cd ../frontend && npx eslint --print-config next.config.ts > /dev/null && echo "✅ Frontend ESLint config valid"
+
       - name: Lint code
         run: pnpm run lint
 
