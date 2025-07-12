@@ -3,10 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import {
-  Application,
-  ApplicationStatus,
-} from '../../applications/entities/application.entity';
+import { Application } from '../../applications/entities/application.entity';
+import { ApplicationStatus } from '../types/application.types';
 import { LlmService } from '../../llm/llm.service';
 
 export interface CoverLetterInput {
@@ -20,7 +18,7 @@ export interface CoverLetterInput {
 export interface NotificationInput {
   applicationId: string;
   message: string;
-  type: 'reminder' | 'deadline' | 'archive';
+  type: 'reminder' | 'deadline' | 'archive' | 'error' | 'urgent_reminder';
 }
 
 // Activity functions for Temporal workflows
@@ -56,6 +54,7 @@ export async function sendNotification(
   input: NotificationInput,
 ): Promise<void> {
   try {
+    console.log('Sending notification:', input);
     // In a real implementation, this would send emails, push notifications, etc.
     console.log(
       `[${input.type.toUpperCase()}] Application ${input.applicationId}: ${input.message}`,

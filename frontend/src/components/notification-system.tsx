@@ -33,37 +33,37 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
   }, [onNotificationReceived])
 
   useEffect(() => {
-    let eventSource: EventSource | null = null
+    let streamConnection: { close: () => void } | null = null
 
     const connectToSSE = () => {
       try {
-        eventSource = applicationApi.createNotificationStream()
-        
-        eventSource.onopen = () => {
-          console.log('📡 Connected to notification stream')
-          setIsConnected(true)
-        }
-
-        eventSource.onmessage = (event) => {
-          try {
-            const data: NotificationEvent = JSON.parse(event.data)
-            addNotification(data)
-          } catch (error) {
-            console.error('Failed to parse notification:', error)
-          }
-        }
-
-        eventSource.onerror = (error) => {
-          console.error('SSE connection error:', error)
-          setIsConnected(false)
-          
-          // Attempt to reconnect after 5 seconds
-          setTimeout(() => {
-            if (eventSource?.readyState === EventSource.CLOSED) {
-              connectToSSE()
+        streamConnection = applicationApi.createNotificationStream(
+          // onMessage callback
+          (event) => {
+            try {
+              console.log('Received notification:', event)
+              const data: NotificationEvent = JSON.parse(event.data)
+              addNotification(data)
+            } catch (error) {
+              console.error('Failed to parse notification:', error)
             }
-          }, 5000)
-        }
+          },
+          // onError callback
+          (error) => {
+            console.error('SSE connection error:', error)
+            setIsConnected(false)
+            
+            // Attempt to reconnect after 5 seconds
+            setTimeout(() => {
+              connectToSSE()
+            }, 5000)
+          },
+          // onOpen callback
+          () => {
+            console.log('📡 Connected to notification stream')
+            setIsConnected(true)
+          }
+        )
       } catch (error) {
         console.error('Failed to create SSE connection:', error)
         setIsConnected(false)
@@ -73,8 +73,8 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
     connectToSSE()
 
     return () => {
-      if (eventSource) {
-        eventSource.close()
+      if (streamConnection) {
+        streamConnection.close()
       }
     }
   }, [addNotification])

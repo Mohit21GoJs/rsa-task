@@ -25,7 +25,8 @@ pnpm run start
 - 🌐 Frontend: http://localhost:3000
 - 🔧 Backend API: http://localhost:3001
 - 📊 Temporal UI: http://localhost:8080
-- 📋 API Playground: http://localhost:3001/api/docs (powered by Scalar)
+- 📋 API Docs: http://localhost:3001/api/docs (powered by Swagger)
+- 📋 API Docs: http://localhost:3001/api/playground (powered by Scalar)
 
 ## 🏗️ Architecture
 

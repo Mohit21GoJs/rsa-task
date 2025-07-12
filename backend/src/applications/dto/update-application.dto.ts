@@ -1,6 +1,6 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ApplicationStatus } from '../entities/application.entity';
+import { ApplicationStatus } from '../../workflow/types/application.types';
 
 export class UpdateApplicationDto {
   @ApiPropertyOptional({

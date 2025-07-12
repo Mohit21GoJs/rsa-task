@@ -5,7 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 import { ApplicationsService } from './applications.service';
-import { Application, ApplicationStatus } from './entities/application.entity';
+import { Application } from './entities/application.entity';
+import { ApplicationStatus } from '../workflow/types/application.types';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { WorkflowService } from '../workflow/workflow.service';

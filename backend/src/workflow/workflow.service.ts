@@ -1,10 +1,8 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client, Connection, WorkflowHandle } from '@temporalio/client';
-import {
-  Application,
-  ApplicationStatus,
-} from '../applications/entities/application.entity';
+import { Application } from '../applications/entities/application.entity';
+import { ApplicationStatus } from './types/application.types';
 import {
   jobApplicationWorkflow,
   statusUpdateSignal,

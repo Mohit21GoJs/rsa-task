@@ -1,7 +1,7 @@
 import { IsArray, IsEnum, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ApplicationStatus } from '../entities/application.entity';
+import { ApplicationStatus } from '../../workflow/types/application.types';
 
 export class BulkUpdateItem {
   @ApiProperty({ description: 'Application ID' })

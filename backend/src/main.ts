@@ -71,11 +71,18 @@ async function bootstrap() {
       'x-requested-with',
       'x-forwarded-for',
       'user-agent',
+      'cache-control',
+      'accept',
+      'accept-encoding',
+      'accept-language',
     ],
     exposedHeaders: [
       'X-Response-Time',
       'X-RateLimit-Limit',
       'X-RateLimit-Remaining',
+      'Content-Type',
+      'Cache-Control',
+      'Connection',
     ],
     maxAge: 86400, // 24 hours
   });

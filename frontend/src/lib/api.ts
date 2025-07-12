@@ -1,4 +1,5 @@
 import { Application, CreateApplicationDto, UpdateApplicationDto, ApplicationStatus } from './types'
+import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
@@ -109,8 +110,69 @@ export const applicationApi = {
     return fetchApi<Application[]>('/applications/overdue')
   },
 
-  // Create SSE connection for notifications
-  createNotificationStream: (): EventSource => {
-    return new EventSource(`${API_BASE_URL}/applications/notifications`)
+  // Create SSE connection for notifications using @microsoft/fetch-event-source
+  createNotificationStream: (onMessage: (event: { data: string }) => void, onError?: (error: any) => void, onOpen?: () => void) => {
+    const abortController = new AbortController()
+    
+    const startStream = async () => {
+      try {
+        await fetchEventSource(`${API_BASE_URL}/applications/notifications`, {
+          method: 'GET',
+          headers: {
+            'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '',
+          },
+          signal: abortController.signal,
+          async onopen() {
+            console.log('📡 Connected to notification stream')
+            onOpen?.()
+          },
+          onmessage(event) {
+            // Just pass the data property that's actually used
+            onMessage({ data: event.data })
+          },
+          onerror(error) {
+            console.error('SSE connection error:', error)
+            onError?.(error)
+            throw error // This will trigger a reconnect
+          }
+        })
+      } catch (error) {
+        console.error('Failed to create SSE connection:', error)
+        onError?.(error)
+      }
+    }
+    
+    // Start the stream
+    startStream()
+    
+    // Return an object with close method for cleanup
+    return {
+      close: () => {
+        abortController.abort()
+      }
+    }
+  },
+
+  // Get SSE connection statistics
+  getSSEStats: async (): Promise<{
+    totalConnections: number;
+    activeConnections: number;
+    connections: Array<{
+      id: string;
+      connectedAt: string;
+      isActive: boolean;
+    }>;
+  }> => {
+    const response = await fetch(`${API_BASE_URL}/applications/notifications/stats`, {
+      headers: {
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
   },
 } 

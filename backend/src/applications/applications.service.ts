@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   MessageEvent,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -11,18 +12,28 @@ import { v4 as uuidv4 } from 'uuid';
 import { addWeeks } from 'date-fns';
 import { Observable, Subject } from 'rxjs';
 
-import { Application, ApplicationStatus } from './entities/application.entity';
+import { Application } from './entities/application.entity';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { BulkUpdateApplicationDto } from './dto/bulk-update-application.dto';
 import { WorkflowService } from '../workflow/workflow.service';
 import { LlmService } from '../llm/llm.service';
+import { ApplicationStatus } from '../workflow/types/application.types';
+
+// Enhanced SSE Connection interface
+interface SSEConnection {
+  id: string;
+  subject: Subject<MessageEvent>;
+  connectedAt: Date;
+  isActive: boolean;
+}
 
 @Injectable()
-export class ApplicationsService {
-  private notificationSubject = new Subject<MessageEvent>();
+export class ApplicationsService implements OnModuleDestroy {
+  private connections = new Map<string, SSEConnection>();
   private notificationsHistory: any[] = []; // Store recent notifications
   private readonly MAX_HISTORY_SIZE = 100; // Keep last 100 notifications
+  private connectionCleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(
     @InjectRepository(Application)
@@ -30,7 +41,10 @@ export class ApplicationsService {
     private readonly workflowService: WorkflowService,
     private readonly llmService: LlmService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    // Start connection cleanup interval
+    this.startConnectionCleanup();
+  }
 
   async create(
     createApplicationDto: CreateApplicationDto,
@@ -125,7 +139,55 @@ export class ApplicationsService {
   }
 
   getNotificationStream(): Observable<MessageEvent> {
-    return this.notificationSubject.asObservable();
+    const connectionId = uuidv4();
+    console.log(`📡 Creating new SSE connection: ${connectionId}`);
+
+    // Create a new Subject for this connection
+    const subject = new Subject<MessageEvent>();
+    
+    // Store the connection
+    const connection: SSEConnection = {
+      id: connectionId,
+      subject,
+      connectedAt: new Date(),
+      isActive: true,
+    };
+    
+    this.connections.set(connectionId, connection);
+    console.log(`📊 Total active connections: ${this.connections.size}`);
+
+    // Return an Observable that handles cleanup on completion/error
+    return new Observable<MessageEvent>((observer) => {
+      const subscription = subject.subscribe({
+        next: (event) => {
+          try {
+            observer.next(event);
+          } catch (error) {
+            console.error(`❌ Error sending to connection ${connectionId}:`, error);
+            // Mark connection as inactive if there's an error
+            connection.isActive = false;
+            this.cleanupConnection(connectionId);
+          }
+        },
+        error: (error) => {
+          console.error(`❌ Connection ${connectionId} error:`, error);
+          observer.error(error);
+          this.cleanupConnection(connectionId);
+        },
+        complete: () => {
+          console.log(`✅ Connection ${connectionId} completed`);
+          observer.complete();
+          this.cleanupConnection(connectionId);
+        },
+      });
+
+      // Cleanup function called when the observable is unsubscribed
+      return () => {
+        console.log(`🔌 Client disconnected: ${connectionId}`);
+        subscription.unsubscribe();
+        this.cleanupConnection(connectionId);
+      };
+    });
   }
 
   async getNotificationsHistory(): Promise<any[]> {
@@ -195,6 +257,15 @@ export class ApplicationsService {
 
     // Remove from database
     await this.applicationRepository.remove(application);
+
+    // Send real-time notification for deletion
+    this.sendNotification({
+      type: 'application_deleted',
+      applicationId: application.id,
+      company: application.company,
+      role: application.role,
+      message: `Application deleted: ${application.company} - ${application.role}`,
+    });
   }
 
   async findByStatus(status: ApplicationStatus): Promise<Application[]> {
@@ -268,6 +339,8 @@ export class ApplicationsService {
     status?: ApplicationStatus;
     message: string;
   }): void {
+    console.log('📤 Sending notification to SSE clients:', notification);
+    
     const notificationWithTimestamp = {
       ...notification,
       timestamp: new Date().toISOString(),
@@ -286,7 +359,8 @@ export class ApplicationsService {
       this.notificationsHistory.shift();
     }
 
-    this.notificationSubject.next(messageEvent);
+    // Send to all active connections
+    this.broadcastToConnections(messageEvent);
   }
 
   // Method to check and send deadline reminders
@@ -324,5 +398,226 @@ export class ApplicationsService {
         });
       }
     }
+  }
+
+  /**
+   * Monitor all applications for approaching deadlines and trigger urgent reminders
+   * This method can be called by a scheduler or monitoring service
+   */
+  async monitorDeadlineApproachingApplications(): Promise<{
+    urgent: Application[];
+    approaching: Application[];
+    total: number;
+  }> {
+    try {
+      const now = new Date();
+      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+      // Find applications with deadlines within 1 day that are still pending
+      const urgentApplications = await this.applicationRepository.find({
+        where: {
+          deadline: LessThan(oneDayFromNow),
+          status: ApplicationStatus.PENDING,
+        },
+        order: { deadline: 'ASC' },
+      });
+
+      // Find applications with deadlines within 3 days
+      const approachingApplications = await this.applicationRepository.find({
+        where: {
+          deadline: LessThan(threeDaysFromNow),
+          status: ApplicationStatus.PENDING,
+        },
+        order: { deadline: 'ASC' },
+      });
+
+      // Send urgent notifications for applications within 1 day
+      for (const application of urgentApplications) {
+        const timeRemaining = application.deadline.getTime() - now.getTime();
+        const hoursRemaining = Math.ceil(timeRemaining / (60 * 60 * 1000));
+
+        this.sendNotification({
+          type: 'deadline_monitor',
+          applicationId: application.id,
+          company: application.company,
+          role: application.role,
+          status: application.status,
+          message: `🚨 URGENT: ${application.company} - ${application.role} deadline in ${hoursRemaining} hours! Take action immediately.`,
+        });
+
+        console.log(
+          `Urgent deadline alert: Application ${application.id} for ${application.company} - ${application.role} has ${hoursRemaining} hours remaining`,
+        );
+      }
+
+      return {
+        urgent: urgentApplications,
+        approaching: approachingApplications,
+        total: approachingApplications.length,
+      };
+    } catch (error) {
+      console.error('Error monitoring deadline approaching applications:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get applications that need immediate attention (deadline within specified hours)
+   */
+  async getApplicationsRequiringAttention(
+    hoursThreshold: number = 24,
+  ): Promise<Application[]> {
+    try {
+      const thresholdDate = new Date(Date.now() + hoursThreshold * 60 * 60 * 1000);
+
+      return await this.applicationRepository.find({
+        where: {
+          deadline: LessThan(thresholdDate),
+          status: ApplicationStatus.PENDING,
+        },
+        order: { deadline: 'ASC' },
+      });
+    } catch (error) {
+      console.error('Error getting applications requiring attention:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Manually trigger reminder for a specific application
+   */
+  async triggerManualReminder(applicationId: string): Promise<void> {
+    try {
+      const application = await this.findOne(applicationId);
+      
+      if (application.status !== ApplicationStatus.PENDING) {
+        throw new BadRequestException('Cannot send reminders for non-pending applications');
+      }
+
+      const now = new Date();
+      const timeRemaining = application.deadline.getTime() - now.getTime();
+      
+      if (timeRemaining <= 0) {
+        throw new BadRequestException('Cannot send reminder for past deadline');
+      }
+
+      const hoursRemaining = Math.ceil(timeRemaining / (60 * 60 * 1000));
+      const daysRemaining = Math.ceil(timeRemaining / (24 * 60 * 60 * 1000));
+
+      let urgencyLevel = 'normal';
+      if (hoursRemaining <= 24) urgencyLevel = 'urgent';
+      else if (daysRemaining <= 3) urgencyLevel = 'high';
+
+      this.sendNotification({
+        type: 'manual_reminder',
+        applicationId: application.id,
+        company: application.company,
+        role: application.role,
+        status: application.status,
+        message: `📢 Manual reminder: ${application.company} - ${application.role} deadline in ${daysRemaining > 1 ? `${daysRemaining} days` : `${hoursRemaining} hours`}`,
+      });
+
+      console.log(`Manual reminder triggered for application ${applicationId}`);
+    } catch (error) {
+      console.error(`Error triggering manual reminder for application ${applicationId}:`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced connection management methods
+  private broadcastToConnections(messageEvent: MessageEvent): void {
+    const activeConnections = Array.from(this.connections.values()).filter(
+      (conn) => conn.isActive
+    );
+
+    console.log(`📡 Broadcasting to ${activeConnections.length} active connections`);
+
+    activeConnections.forEach((connection) => {
+      try {
+        connection.subject.next(messageEvent);
+      } catch (error) {
+        console.error(`❌ Error broadcasting to connection ${connection.id}:`, error);
+        // Mark connection as inactive and clean it up
+        connection.isActive = false;
+        this.cleanupConnection(connection.id);
+      }
+    });
+  }
+
+  private cleanupConnection(connectionId: string): void {
+    const connection = this.connections.get(connectionId);
+    if (connection) {
+      console.log(`🧹 Cleaning up connection: ${connectionId}`);
+      connection.isActive = false;
+      connection.subject.complete();
+      this.connections.delete(connectionId);
+      console.log(`📊 Remaining active connections: ${this.connections.size}`);
+    }
+  }
+
+  private startConnectionCleanup(): void {
+    // Clean up inactive connections every 30 seconds
+    this.connectionCleanupInterval = setInterval(() => {
+      const now = new Date();
+      const connectionTimeout = 5 * 60 * 1000; // 5 minutes timeout
+
+      const connectionsToCleanup: string[] = [];
+
+      for (const [id, connection] of this.connections.entries()) {
+        // Clean up inactive connections or connections older than timeout
+        if (
+          !connection.isActive ||
+          now.getTime() - connection.connectedAt.getTime() > connectionTimeout
+        ) {
+          connectionsToCleanup.push(id);
+        }
+      }
+
+      if (connectionsToCleanup.length > 0) {
+        console.log(`🧹 Cleaning up ${connectionsToCleanup.length} inactive connections`);
+        connectionsToCleanup.forEach((id) => this.cleanupConnection(id));
+      }
+    }, 30000); // Run every 30 seconds
+  }
+
+  // Get connection statistics
+  getConnectionStats(): {
+    totalConnections: number;
+    activeConnections: number;
+    connections: Array<{
+      id: string;
+      connectedAt: Date;
+      isActive: boolean;
+    }>;
+  } {
+    const connections = Array.from(this.connections.values()).map((conn) => ({
+      id: conn.id,
+      connectedAt: conn.connectedAt,
+      isActive: conn.isActive,
+    }));
+
+    return {
+      totalConnections: this.connections.size,
+      activeConnections: connections.filter((conn) => conn.isActive).length,
+      connections,
+    };
+  }
+
+  // Cleanup method for service shutdown
+  onModuleDestroy(): void {
+    console.log('🔄 Shutting down ApplicationsService...');
+    
+    // Stop connection cleanup interval
+    if (this.connectionCleanupInterval) {
+      clearInterval(this.connectionCleanupInterval);
+    }
+
+    // Clean up all connections
+    this.connections.forEach((connection, id) => {
+      this.cleanupConnection(id);
+    });
+
+    console.log('✅ ApplicationsService shutdown complete');
   }
 }

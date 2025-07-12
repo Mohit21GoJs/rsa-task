@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, RefreshCw, Users, Bell } from 'lucide-react'
+import { Plus, RefreshCw, Bell } from 'lucide-react'
 import { Application, ApplicationStatus } from '@/lib/types'
 import { applicationApi, NotificationEvent } from '@/lib/api'
 import { ApplicationCard } from '@/components/application-card'
@@ -155,58 +155,34 @@ export default function HomePage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Button
             variant="outline"
-            className="p-4 h-auto justify-start"
-            onClick={() => setViewMode('reminders')}
+            onClick={() => setViewMode('form')}
+            className="h-auto p-4 flex flex-col items-center gap-2"
           >
-            <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-red-500" />
-              <div className="text-left">
-                <div className="font-medium">Reminders</div>
-                <div className="text-sm text-gray-600">
-                  {urgentCounts.overdue + urgentCounts.upcoming} urgent
-                </div>
-              </div>
-            </div>
+            <Plus className="h-6 w-6" />
+            <span>Add New Application</span>
           </Button>
-
+          
           <Button
             variant="outline"
-            className="p-4 h-auto justify-start"
             onClick={() => setViewMode('bulk-update')}
+            className="h-auto p-4 flex flex-col items-center gap-2"
           >
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-blue-500" />
-              <div className="text-left">
-                <div className="font-medium">Bulk Update</div>
-                <div className="text-sm text-gray-600">
-                  Update multiple apps
-                </div>
-              </div>
-            </div>
+            <RefreshCw className="h-6 w-6" />
+            <span>Bulk Update Status</span>
           </Button>
-
-          <div className="p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <div className="text-left">
-                <div className="font-medium">{urgentCounts.upcoming}</div>
-                <div className="text-sm text-gray-600">Due Soon</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <div className="text-left">
-                <div className="font-medium">{urgentCounts.overdue}</div>
-                <div className="text-sm text-gray-600">Overdue</div>
-              </div>
-            </div>
-          </div>
+          
+          <Button
+            variant="outline"
+            onClick={fetchApplications}
+            disabled={loading}
+            className="h-auto p-4 flex flex-col items-center gap-2"
+          >
+            <RefreshCw className={`h-6 w-6 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh Data</span>
+          </Button>
         </div>
 
         {/* Status Filter Tabs */}

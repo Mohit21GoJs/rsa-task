@@ -5,10 +5,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { AppModule } from '../src/app.module';
-import {
-  Application,
-  ApplicationStatus,
-} from '../src/applications/entities/application.entity';
+import { Application } from '../src/applications/entities/application.entity';
+import { ApplicationStatus } from '../src/workflow/types/application.types';
 import { WorkflowService } from '../src/workflow/workflow.service';
 import { LlmService } from '../src/llm/llm.service';
 

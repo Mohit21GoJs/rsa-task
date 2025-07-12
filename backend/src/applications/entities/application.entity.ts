@@ -6,15 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum ApplicationStatus {
-  PENDING = 'pending',
-  INTERVIEW = 'interview',
-  OFFER = 'offer',
-  REJECTED = 'rejected',
-  WITHDRAWN = 'withdrawn',
-  ARCHIVED = 'archived',
-}
+import { ApplicationStatus } from '../../workflow/types/application.types';
 
 @Entity('applications')
 export class Application {
