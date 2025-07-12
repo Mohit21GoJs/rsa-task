@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -21,7 +21,7 @@ COPY backend/ .
 RUN pnpm run build
 
 # Production stage
-FROM node:18-alpine AS runner
+FROM node:24-alpine AS runner
 
 # Install pnpm
 RUN npm install -g pnpm
