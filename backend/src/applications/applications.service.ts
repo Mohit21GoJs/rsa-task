@@ -336,7 +336,7 @@ export class ApplicationsService {
 
         // Check if we've sent a notification recently to avoid spam
         const lastNotification = this.notificationsSent.get(application.id);
-        const hoursSinceLastNotification = lastNotification 
+        const hoursSinceLastNotification = lastNotification
           ? (now.getTime() - lastNotification.getTime()) / (60 * 60 * 1000)
           : 24; // If never sent, treat as 24 hours ago
 
@@ -362,12 +362,16 @@ export class ApplicationsService {
 
       // Send regular notifications for approaching deadlines (2-3 days)
       for (const application of approachingApplications) {
-        if (!urgentApplications.find(urgent => urgent.id === application.id)) {
+        if (
+          !urgentApplications.find((urgent) => urgent.id === application.id)
+        ) {
           const timeRemaining = application.deadline.getTime() - now.getTime();
-          const daysRemaining = Math.ceil(timeRemaining / (24 * 60 * 60 * 1000));
+          const daysRemaining = Math.ceil(
+            timeRemaining / (24 * 60 * 60 * 1000),
+          );
 
           const lastNotification = this.notificationsSent.get(application.id);
-          const hoursSinceLastNotification = lastNotification 
+          const hoursSinceLastNotification = lastNotification
             ? (now.getTime() - lastNotification.getTime()) / (60 * 60 * 1000)
             : 24;
 
@@ -470,7 +474,9 @@ export class ApplicationsService {
   /**
    * Test method to send cover letter generation notification
    */
-  async sendTestCoverLetterNotification(application: Application): Promise<void> {
+  async sendTestCoverLetterNotification(
+    application: Application,
+  ): Promise<void> {
     this.notificationsService.sendNotification({
       type: 'cover_letter_generated',
       applicationId: application.id,
@@ -479,6 +485,8 @@ export class ApplicationsService {
       message: `Cover letter generated for ${application.company} - ${application.role}`,
     });
 
-    console.log(`📄 Test cover letter notification sent for application ${application.id}`);
+    console.log(
+      `📄 Test cover letter notification sent for application ${application.id}`,
+    );
   }
 }

@@ -50,4 +50,4 @@ export class NotificationsController {
   clearNotificationHistory() {
     this.notificationsService.clearNotificationHistory();
   }
-} 
+}

@@ -54,8 +54,10 @@ export async function generateCoverLetter(
         role: input.role,
         message: `Cover letter generated for ${input.company} - ${input.role}`,
       });
-      
-      console.log(`📄 Cover letter notification sent for application ${input.applicationId}`);
+
+      console.log(
+        `📄 Cover letter notification sent for application ${input.applicationId}`,
+      );
     } else {
       console.warn('NotificationsService not available in worker context');
     }
@@ -72,16 +74,16 @@ export async function sendNotification(
 ): Promise<void> {
   const notificationsService = (global as any).notificationsService;
   const applicationRepository = (global as any).applicationRepository;
-  
+
   try {
     console.log('Sending notification:', input);
-    
+
     // Send via Socket.IO if NotificationsService is available
     if (notificationsService) {
       // Try to get application details for better notification context
       let company = 'Workflow';
       let role = 'System';
-      
+
       if (applicationRepository) {
         try {
           const application = await applicationRepository.findOne({
@@ -92,10 +94,13 @@ export async function sendNotification(
             role = application.role;
           }
         } catch (error) {
-          console.warn('Could not fetch application details for notification:', error);
+          console.warn(
+            'Could not fetch application details for notification:',
+            error,
+          );
         }
       }
-      
+
       notificationsService.sendNotification({
         type: input.type,
         applicationId: input.applicationId,

@@ -100,7 +100,7 @@ export class NotificationsGateway
     if (connection) {
       connection.userId = data.userId;
       this.logger.log(`🔔 Client ${client.id} subscribed to notifications`);
-      
+
       client.emit('subscription-confirmed', {
         clientId: client.id,
         subscribed: true,
@@ -198,4 +198,4 @@ export class NotificationsGateway
       uptime: process.uptime().toString(),
     };
   }
-} 
+}

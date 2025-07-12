@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationsGateway, NotificationData } from './notifications.gateway';
+import {
+  NotificationsGateway,
+  NotificationData,
+} from './notifications.gateway';
 import { ApplicationStatus } from '../workflow/types/application.types';
 
 @Injectable()
@@ -28,14 +31,17 @@ export class NotificationsService {
   }
 
   // Send notification to specific client
-  sendToClient(clientId: string, notification: {
-    type: string;
-    applicationId: string;
-    company: string;
-    role: string;
-    status?: ApplicationStatus;
-    message: string;
-  }): void {
+  sendToClient(
+    clientId: string,
+    notification: {
+      type: string;
+      applicationId: string;
+      company: string;
+      role: string;
+      status?: ApplicationStatus;
+      message: string;
+    },
+  ): void {
     this.logger.log(`📨 Sending notification to client ${clientId}`);
 
     const notificationData: NotificationData = {
@@ -65,4 +71,4 @@ export class NotificationsService {
   getHealthStatus() {
     return this.notificationsGateway.getHealthStatus();
   }
-} 
+}

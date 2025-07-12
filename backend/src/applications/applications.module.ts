@@ -11,10 +11,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Application]), 
-    WorkflowModule, 
+    TypeOrmModule.forFeature([Application]),
+    WorkflowModule,
     LlmModule,
-    NotificationsModule
+    NotificationsModule,
   ],
   controllers: [ApplicationsController],
   providers: [ApplicationsService, DeadlineSchedulerService],

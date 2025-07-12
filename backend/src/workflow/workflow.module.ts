@@ -9,9 +9,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Application]), 
+    TypeOrmModule.forFeature([Application]),
     LlmModule,
-    NotificationsModule
+    NotificationsModule,
   ],
   providers: [WorkflowService, ApplicationActivities],
   exports: [WorkflowService],

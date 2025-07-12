@@ -216,21 +216,25 @@ export class ApplicationsController {
   }
 
   @Post(':id/test-cover-letter-notification')
-  @ApiOperation({ summary: 'Test cover letter generation notification (for testing)' })
+  @ApiOperation({
+    summary: 'Test cover letter generation notification (for testing)',
+  })
   @ApiParam({ name: 'id', description: 'Application ID' })
   @ApiResponse({
     status: 200,
     description: 'Test notification sent successfully',
   })
   @HttpCode(HttpStatus.OK)
-  async testCoverLetterNotification(@Param('id') id: string): Promise<{ message: string }> {
+  async testCoverLetterNotification(
+    @Param('id') id: string,
+  ): Promise<{ message: string }> {
     const application = await this.applicationsService.findOne(id);
-    
+
     // Send a test cover letter generation notification
     await this.applicationsService.sendTestCoverLetterNotification(application);
-    
-    return { 
-      message: `Test cover letter notification sent for ${application.company} - ${application.role}` 
+
+    return {
+      message: `Test cover letter notification sent for ${application.company} - ${application.role}`,
     };
   }
 
