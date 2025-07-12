@@ -161,10 +161,6 @@ resource "render_env_group" "backend" {
     DEFAULT_DEADLINE_WEEKS = {
       value = tostring(var.default_deadline_weeks)
     }
-    # Security and performance settings
-    CORS_ORIGINS = {
-      value = join(",", var.allowed_origins)
-    }
     TRUST_PROXY = {
       value = "true"
     }

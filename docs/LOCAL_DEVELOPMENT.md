@@ -89,7 +89,7 @@ LOG_LEVEL=debug
 ENABLE_REQUEST_LOGGING=true
 
 # Optional: Security (for local development)
-CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+CORS_ORIGIN=http://localhost:3000,http://localhost:3001
 TRUST_PROXY=false
 HELMET_ENABLED=false
 RATE_LIMIT_ENABLED=false
