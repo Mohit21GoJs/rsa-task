@@ -8,10 +8,6 @@ output "frontend_url" {
   value       = "https://${render_web_service.frontend.url}"
 }
 
-output "worker_url" {
-  description = "URL of the deployed worker service"
-  value       = "https://${render_web_service.worker.url}"
-}
 
 output "database_name" {
   description = "PostgreSQL database name"
@@ -28,11 +24,6 @@ output "frontend_service_id" {
   value       = render_web_service.frontend.id
 }
 
-output "worker_service_id" {
-  description = "Render service ID for the worker"
-  value       = render_web_service.worker.id
-}
-
 output "database_id" {
   description = "Render database ID"
   value       = render_postgres.database.id
@@ -46,11 +37,6 @@ output "backend_env_group_id" {
 output "frontend_env_group_id" {
   description = "Environment group ID for the frontend service"
   value       = render_env_group.frontend.id
-}
-
-output "worker_env_group_id" {
-  description = "Environment group ID for the worker service"
-  value       = render_env_group.worker.id
 }
 
 output "environment" {
