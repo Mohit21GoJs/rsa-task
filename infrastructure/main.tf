@@ -144,15 +144,8 @@ resource "render_env_group" "backend" {
     PORT = {
       value = "3000"
     }
-    TEMPORAL_ADDRESS = {
-      value = var.temporal_address
-    }
     TEMPORAL_NAMESPACE = {
       value = var.temporal_namespace
-    }
-    # AI Integration
-    GEMINI_API_KEY = {
-      value = var.gemini_api_key
     }
     # Application settings
     GRACE_PERIOD_DAYS = {
