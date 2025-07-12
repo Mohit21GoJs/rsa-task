@@ -5,6 +5,7 @@ This guide covers the complete deployment process for the Persona Job Assistant 
 ## Overview
 
 The application uses a modern CI/CD pipeline with:
+
 - **GitHub Actions** for continuous integration and deployment
 - **Terraform** for infrastructure as code
 - **Render.io** as the hosting platform
@@ -39,12 +40,14 @@ The application uses a modern CI/CD pipeline with:
 ## Prerequisites
 
 ### 1. Required Accounts
+
 - GitHub account with repository access
 - Render.io account
 - Terraform Cloud account (for state management)
 - Google Cloud account (for Gemini API)
 
 ### 2. Required Tools
+
 - Terraform >= 1.6.0
 - Node.js >= 18.0.0
 - pnpm >= 8.x
@@ -54,17 +57,17 @@ The application uses a modern CI/CD pipeline with:
 
 Add these secrets to your GitHub repository (**Settings** → **Secrets and variables** → **Actions**):
 
-| Secret Name | Description | Example Value |
-|-------------|-------------|---------------|
-| `TF_API_TOKEN` | Terraform Cloud API token | `ATxxxxx...` |
-| `RENDER_API_KEY` | Render.io API key | `rnd_xxx...` |
-| `RENDER_OWNER_ID` | Render.io Owner ID | `usr_xxx...` |
-| `TEMPORAL_ADDRESS` | Temporal server address | `temporal.example.com:7233` |
-| `GEMINI_API_KEY` | Google Gemini API key | `AIxxxxx...` |
-| `GITHUB_ACCESS_TOKEN` | GitHub token for private repo access | `github_pat_xxx...` |
-| `RENDER_BACKEND_SERVICE_ID` | Backend service ID (after first deploy) | `srv_xxx...` |
-| `RENDER_FRONTEND_SERVICE_ID` | Frontend service ID (after first deploy) | `srv_xxx...` |
-| `RENDER_WORKER_SERVICE_ID` | Worker service ID (after first deploy) | `srv_xxx...` |
+| Secret Name                  | Description                              | Example Value               |
+| ---------------------------- | ---------------------------------------- | --------------------------- |
+| `TF_API_TOKEN`               | Terraform Cloud API token                | `ATxxxxx...`                |
+| `RENDER_API_KEY`             | Render.io API key                        | `rnd_xxx...`                |
+| `RENDER_OWNER_ID`            | Render.io Owner ID                       | `usr_xxx...`                |
+| `TEMPORAL_ADDRESS`           | Temporal server address                  | `temporal.example.com:7233` |
+| `GEMINI_API_KEY`             | Google Gemini API key                    | `AIxxxxx...`                |
+| `GITHUB_ACCESS_TOKEN`        | GitHub token for private repo access     | `github_pat_xxx...`         |
+| `RENDER_BACKEND_SERVICE_ID`  | Backend service ID (after first deploy)  | `srv_xxx...`                |
+| `RENDER_FRONTEND_SERVICE_ID` | Frontend service ID (after first deploy) | `srv_xxx...`                |
+| `RENDER_WORKER_SERVICE_ID`   | Worker service ID (after first deploy)   | `srv_xxx...`                |
 
 ## Infrastructure Setup
 
@@ -92,12 +95,14 @@ Create a Terraform Cloud workspace for state management:
 The infrastructure supports two environments:
 
 #### Staging Environment
+
 - **Branch**: `develop`
 - **Auto-deploy**: Enabled
 - **Resources**: Starter plans (cost-effective)
 - **Domain**: `*.onrender.com`
 
 #### Production Environment
+
 - **Branch**: `main`
 - **Auto-deploy**: Disabled (manual approval required)
 - **Resources**: Pro plans (high availability)
@@ -127,8 +132,9 @@ chmod +x scripts/deploy-terraform.sh
 The CI/CD pipeline automatically triggers on:
 
 #### Continuous Integration (CI)
+
 - **Trigger**: All pull requests and pushes
-- **Actions**: 
+- **Actions**:
   - Security scanning (Trivy)
   - Code quality checks (ESLint, Prettier)
   - Unit and E2E tests
@@ -136,6 +142,7 @@ The CI/CD pipeline automatically triggers on:
   - Docker security scanning
 
 #### Continuous Deployment (CD)
+
 - **Staging**: Automatic deployment on push to `develop`
 - **Production**: Automatic deployment on push to `main`
 - **Manual**: Via GitHub Actions workflow_dispatch
@@ -161,16 +168,19 @@ graph TD
 ## Service Configuration
 
 ### Backend Service (NestJS)
+
 - **Runtime**: Node.js 18
 - **Build Command**: `pnpm install --frozen-lockfile && pnpm run build:backend`
-- **Start Command**: `cd backend && node dist/main.js`
+- **Start Command**: `cd backend && node dist/src/main.js`
 - **Health Check**: `/api/health`
 
 ### Frontend Service (Next.js)
+
 - **Runtime**: Node.js 18
 - **Build Command**: `cd .. && pnpm install --frozen-lockfile && pnpm run build:frontend`
 - **Start Command**: `cd frontend && npm start`
 
 ### Worker Service (Temporal)
+
 - **Runtime**: Node.js 18
 - **Build Command**: `pnpm install --frozen-lockfile && pnpm run build:backend`
