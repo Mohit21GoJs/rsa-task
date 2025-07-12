@@ -283,52 +283,7 @@ cd backend && pnpm run test:watch
 - 📝 **Audit Logging**: Request and action logging
 - 🔍 **Security Scanning**: Automated vulnerability detection
 
-## 📈 Scaling
-
-### Resource Tiers
-
-| Plan     | CPU      | Memory | Storage | Use Case    |
-| -------- | -------- | ------ | ------- | ----------- |
-| Starter  | 0.5 vCPU | 512MB  | 1GB     | Development |
-| Standard | 1 vCPU   | 1GB    | 2GB     | Small teams |
-| Pro      | 2 vCPU   | 2GB    | 4GB     | Production  |
-
-### Auto-scaling
-
-Services automatically scale based on:
-
-- Request volume
-- CPU utilization
-- Memory usage
-- Queue depth
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
 
 ## 📄 License
 
 This project is licensed under the MIT License.
-
-## 🆘 Support
-
-- 📧 **Email**: support@example.com
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-org/rsa-task/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/your-org/rsa-task/discussions)
-- 📚 **Documentation**: [Full Documentation](docs/)
-
-## 🎯 Roadmap
-
-- [ ] Mobile app development
-- [ ] Advanced AI features
-- [ ] Multi-user support
-- [ ] Integration with job boards
-- [ ] Advanced analytics
-
----
-
-**Made with ❤️ by the development team**
