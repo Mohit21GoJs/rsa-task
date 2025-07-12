@@ -19,7 +19,6 @@ permissions:
 
 env:
   NODE_VERSION: '20.x'
-  PNPM_VERSION: '9.x'
   FORCE_COLOR: 3
 
 jobs:
@@ -63,7 +62,6 @@ jobs:
         uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
 
       - name: Lint code
         run: pnpm run lint
@@ -88,7 +86,6 @@ jobs:
         uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
 
       - name: Build ${{ matrix.target }}
         run: pnpm run build:${{ matrix.target }}
@@ -132,7 +129,6 @@ jobs:
         uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
 
       - name: Wait for services
         run: |
@@ -166,7 +162,6 @@ jobs:
         uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
 
       - name: Run frontend tests
         working-directory: frontend
