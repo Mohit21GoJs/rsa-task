@@ -42,7 +42,6 @@ locals {
   # Service names with environment prefix
   backend_service_name  = "${local.app_name}-backend"
   frontend_service_name = "${local.app_name}-frontend"
-  worker_service_name   = "${local.app_name}-worker"
   database_name         = "${local.app_name}-db"
 }
 
@@ -133,45 +132,6 @@ resource "render_postgres" "database" {
   database_user = "app_user"
 }
 
-# Worker Service
-resource "render_web_service" "worker" {
-  name   = local.worker_service_name
-  plan   = var.worker_plan
-  region = var.region
-
-  start_command = "cd backend && node dist/src/worker/temporal-worker.js"
-
-  # Runtime source configuration with GitHub authentication
-  runtime_source = {
-    native_runtime = {
-      auto_deploy   = var.auto_deploy_enabled
-      branch        = var.github_branch
-      build_command = "pnpm install --frozen-lockfile && pnpm run build:backend"
-      repo_url      = "https://github.com/Mohit21GoJs/rsa-task"
-      runtime       = "node"
-
-      # GitHub authentication for private repository access
-      github_repo = var.github_access_token != "" ? {
-        access_token = var.github_access_token
-        } : var.github_app_id != "" ? {
-        app_id          = var.github_app_id
-        installation_id = var.github_app_installation_id
-        private_key     = var.github_app_private_key
-      } : null
-    }
-  }
-
-  # Resource limits
-  num_instances = var.worker_instances
-
-  # Disk configuration
-  disk = {
-    name       = "${local.worker_service_name}-disk"
-    size_gb    = 1
-    mount_path = "/data"
-  }
-}
-
 # Environment Groups with Variables
 
 # Backend Environment Group
@@ -190,9 +150,6 @@ resource "render_env_group" "backend" {
     }
     TEMPORAL_NAMESPACE = {
       value = var.temporal_namespace
-    }
-    GEMINI_API_KEY = {
-      value = var.gemini_api_key
     }
     GRACE_PERIOD_DAYS = {
       value = tostring(var.grace_period_days)
@@ -233,48 +190,13 @@ resource "render_env_group" "frontend" {
       value = var.environment == "production" ? "production" : "staging"
     }
     NEXT_PUBLIC_API_URL = {
-      value = "https://${render_web_service.backend.url}"
+      value = render_web_service.backend.url
     }
     PORT = {
       value = "3000"
     }
     NEXT_PUBLIC_APP_ENV = {
       value = var.environment
-    }
-  }
-}
-
-# Worker Environment Group
-resource "render_env_group" "worker" {
-  name = "${local.worker_service_name}-env"
-
-  env_vars = {
-    NODE_ENV = {
-      value = var.environment == "production" ? "production" : "staging"
-    }
-    TEMPORAL_ADDRESS = {
-      value = var.temporal_address
-    }
-    TEMPORAL_NAMESPACE = {
-      value = var.temporal_namespace
-    }
-    GEMINI_API_KEY = {
-      value = var.gemini_api_key
-    }
-    GRACE_PERIOD_DAYS = {
-      value = tostring(var.grace_period_days)
-    }
-    DEFAULT_DEADLINE_WEEKS = {
-      value = tostring(var.default_deadline_weeks)
-    }
-    DATABASE_NAME = {
-      value = render_postgres.database.database_name
-    }
-    LOG_LEVEL = {
-      value = var.environment == "production" ? "info" : "debug"
-    }
-    ENABLE_REQUEST_LOGGING = {
-      value = "true"
     }
   }
 }
@@ -288,9 +210,4 @@ resource "render_env_group_link" "backend" {
 resource "render_env_group_link" "frontend" {
   env_group_id = render_env_group.frontend.id
   service_ids  = [render_web_service.frontend.id]
-}
-
-resource "render_env_group_link" "worker" {
-  env_group_id = render_env_group.worker.id
-  service_ids  = [render_web_service.worker.id]
 } 
