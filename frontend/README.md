@@ -1,189 +1,256 @@
-# Job Application Tracker - Frontend
+# Frontend Application
 
-A modern Next.js frontend for tracking job applications with automated workflows. Built with Next.js 15, React 19, TypeScript, and shadcn/ui components.
+Modern Next.js frontend for the Job Application Assistant with AI-powered features and responsive design.
 
-## Features
+## 🚀 Quick Start
 
-- **Dashboard View**: Overview of all job applications with status filtering
-- **Application Management**: Add, edit, and delete job applications
-- **Status Tracking**: Track application progress from pending to offer/rejection
-- **Deadline Monitoring**: Visual indicators for approaching deadlines and overdue applications
-- **Responsive Design**: Mobile-first design that works on all devices
-- **Real-time Updates**: Automatic refresh and status updates
+```bash
+# Install dependencies
+pnpm install
 
-## Tech Stack
+# Start development server
+pnpm dev
 
-- **Next.js 15** - React framework with App Router
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS 4** - Styling
-- **shadcn/ui** - UI component library
-- **Lucide React** - Icon library
-- **date-fns** - Date manipulation
+# Open in browser
+open http://localhost:3000
+```
 
-## Prerequisites
+## ✨ Features
 
-- Node.js 18+ 
-- pnpm (package manager)
-- Backend API running on `http://localhost:3000` (see backend README)
+| Feature                  | Description                               |
+| ------------------------ | ----------------------------------------- |
+| 📱 **Responsive Design** | Mobile-first UI that works on all devices |
+| 🎨 **Modern UI**         | Built with shadcn/ui components           |
+| 📊 **Dashboard**         | Overview of all job applications          |
+| 🔄 **Real-time Updates** | Live status synchronization               |
+| 🎯 **Smart Filtering**   | Filter applications by status             |
+| 📅 **Deadline Tracking** | Visual indicators for due dates           |
 
-## Setup Instructions
+## 🛠️ Tech Stack
 
-1. **Install dependencies**:
-   ```bash
-   pnpm install
-   ```
+```mermaid
+graph LR
+    A[Next.js 15] --> B[React 19]
+    B --> C[TypeScript]
+    C --> D[Tailwind CSS]
+    D --> E[shadcn/ui]
+    E --> F[Lucide Icons]
+```
 
-2. **Environment Configuration** (optional):
-   Create a `.env.local` file if you need to override the API URL:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:3000/api
-   ```
+## 📁 Project Structure
 
-3. **Start development server**:
-   ```bash
-   pnpm dev
-   ```
+```
+frontend/
+├── src/
+│   ├── app/                 # Next.js app router
+│   │   ├── page.tsx         # Dashboard page
+│   │   ├── layout.tsx       # App layout
+│   │   └── globals.css      # Global styles
+│   ├── components/
+│   │   ├── ui/              # Reusable UI components
+│   │   ├── application-card.tsx
+│   │   └── application-form.tsx
+│   └── lib/
+│       ├── types.ts         # TypeScript definitions
+│       ├── api.ts           # API client
+│       └── utils.ts         # Utility functions
+├── public/                  # Static assets
+└── package.json
+```
 
-4. **Open in browser**:
-   Navigate to `http://localhost:3001`
+## 🔧 Configuration
 
-## Available Scripts
+### Environment Variables
 
-- `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint
+Create `.env.local` (optional):
 
-## Application Usage
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+```
 
-### Adding a New Application
+### Default Settings
 
-1. Click the "Add Application" button
-2. Fill in the required fields:
-   - Company name
-   - Job role/position
-   - Job description
-   - Resume content
-   - Application deadline (optional, defaults to 4 weeks)
-   - Notes (optional)
-3. Click "Create Application"
+- **API URL**: `http://localhost:3001/api`
+- **Port**: 3000
+- **Build Output**: `.next/`
 
-### Managing Applications
+## 🎨 UI Components
 
-- **View Applications**: All applications are displayed as cards on the dashboard
-- **Filter by Status**: Use the status filter buttons to view specific application types
-- **Update Status**: Click status buttons on pending applications to change their state
-- **Edit Notes**: Click the edit (pencil) icon to modify application notes
-- **Delete Applications**: Click the delete (trash) icon to remove applications
+### Application Management
+
+```typescript
+// Add new application
+const handleCreate = async (data: ApplicationData) => {
+  await api.createApplication(data);
+  // Refresh list
+};
+
+// Update application status
+const handleStatusUpdate = async (id: string, status: ApplicationStatus) => {
+  await api.updateApplication(id, { status });
+};
+```
 
 ### Status Types
 
-- **Pending**: Initial application status
-- **Interview**: Application has progressed to interview stage
-- **Offer**: Job offer received
-- **Rejected**: Application was rejected
-- **Withdrawn**: You withdrew from the process
-- **Archived**: Automatically archived after deadline + grace period
+| Status        | Color  | Description                  |
+| ------------- | ------ | ---------------------------- |
+| **Pending**   | Blue   | Initial application status   |
+| **Interview** | Yellow | Interview scheduled          |
+| **Offer**     | Green  | Job offer received           |
+| **Rejected**  | Red    | Application rejected         |
+| **Withdrawn** | Gray   | Withdrawn from process       |
+| **Archived**  | Gray   | Auto-archived after deadline |
+
+## 🔄 API Integration
+
+### Endpoints Used
+
+| Method   | Endpoint                | Purpose                |
+| -------- | ----------------------- | ---------------------- |
+| `GET`    | `/api/applications`     | Fetch all applications |
+| `POST`   | `/api/applications`     | Create new application |
+| `PATCH`  | `/api/applications/:id` | Update application     |
+| `DELETE` | `/api/applications/:id` | Delete application     |
+
+### Error Handling
+
+```typescript
+try {
+  const response = await api.getApplications();
+  setApplications(response.data);
+} catch (error) {
+  console.error('Failed to fetch applications:', error);
+  // Show user-friendly error message
+}
+```
+
+## 🎯 User Experience
 
 ### Visual Indicators
 
-- **Status Badges**: Color-coded status indicators
-- **Deadline Warnings**: Red text for overdue applications
-- **Days Remaining**: Shows countdown for applications due within 7 days
-- **Cover Letter Status**: Green checkmark when cover letter is generated
+- **🔴 Overdue**: Red text for past deadlines
+- **🟡 Due Soon**: Yellow badge for <7 days
+- **🟢 Cover Letter**: Green checkmark when generated
+- **📅 Deadline**: Days remaining counter
 
-## API Integration
+### Responsive Breakpoints
 
-The frontend communicates with the backend API through:
-
-- `GET /api/applications` - Fetch all applications
-- `GET /api/applications/:id` - Fetch specific application
-- `POST /api/applications` - Create new application
-- `PATCH /api/applications/:id` - Update application
-- `DELETE /api/applications/:id` - Delete application
-- `POST /api/applications/archive-expired` - Archive expired applications
-
-## Component Structure
-
-```
-src/
-├── app/
-│   ├── page.tsx          # Main dashboard page
-│   ├── layout.tsx        # App layout with header
-│   └── globals.css       # Global styles
-├── components/
-│   ├── ui/              # Reusable UI components
-│   │   ├── button.tsx
-│   │   ├── input.tsx
-│   │   ├── textarea.tsx
-│   │   ├── card.tsx
-│   │   └── badge.tsx
-│   ├── application-card.tsx  # Individual application display
-│   └── application-form.tsx  # Add/edit application form
-└── lib/
-    ├── types.ts         # TypeScript type definitions
-    ├── api.ts           # API client functions
-    └── utils.ts         # Utility functions
+```css
+/* Mobile: < 768px */
+/* Tablet: 768px - 1024px */
+/* Desktop: > 1024px */
 ```
 
-## Styling
+## 🧪 Development
 
-The application uses a carefully crafted design system with:
+### Available Scripts
 
-- **Color Palette**: Professional grays with accent colors for status
-- **Typography**: Geist font family for modern, readable text
-- **Spacing**: Consistent spacing scale using Tailwind utilities
-- **Responsive**: Mobile-first design with breakpoints for tablet and desktop
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `pnpm dev`        | Start development server |
+| `pnpm build`      | Build for production     |
+| `pnpm start`      | Start production server  |
+| `pnpm lint`       | Run ESLint               |
+| `pnpm type-check` | Run TypeScript check     |
 
-## Error Handling
+### Code Quality
 
-- API errors are logged to console and shown as alerts
-- Loading states are displayed during async operations
-- Form validation prevents submission of incomplete data
-- Confirmation dialogs for destructive actions (delete)
+- **ESLint**: Code linting and formatting
+- **TypeScript**: Type safety
+- **Prettier**: Code formatting
+- **Tailwind**: Utility-first CSS
 
-## Performance Optimizations
+## 📱 Mobile Experience
 
-- **React 19 Features**: Automatic batching and improved reconciliation
-- **Next.js 15**: Turbopack for fast development builds
-- **Code Splitting**: Automatic route-based code splitting
-- **Image Optimization**: Next.js automatic image optimization (when images are added)
-- **Bundle Analysis**: Built-in bundle analyzer
+### Touch-Friendly Design
 
-## Browser Support
+- Large tap targets (min 44px)
+- Swipe gestures for actions
+- Optimized form inputs
+- Fast tap responses
 
-- Chrome 91+
-- Firefox 90+
-- Safari 14+
-- Edge 91+
+### Performance
 
-## Contributing
+- **Bundle Size**: Optimized with tree-shaking
+- **Images**: Next.js automatic optimization
+- **Fonts**: Optimized loading with `next/font`
+- **Code Splitting**: Automatic route-based splitting
 
-1. Follow the existing code style and patterns
-2. Use TypeScript for all new code
-3. Add proper error handling for API calls
-4. Test responsive design on multiple screen sizes
-5. Ensure accessibility standards are met
-
-## Troubleshooting
+## 🔍 Troubleshooting
 
 ### Common Issues
 
-1. **API Connection Error**:
-   - Ensure backend server is running on port 3000
-   - Check CORS settings if accessing from different domain
+**1. API Connection Error**
 
-2. **Build Errors**:
-   - Clear `.next` directory: `rm -rf .next`
-   - Reinstall dependencies: `rm -rf node_modules && pnpm install`
+```bash
+# Check if backend is running
+curl http://localhost:3001/api/health
 
-3. **TypeScript Errors**:
-   - Check for mismatched types between frontend and backend
-   - Ensure all imports are correctly typed
+# Verify CORS settings
+# Check browser console for CORS errors
+```
 
-4. **Styling Issues**:
-   - Clear browser cache
-   - Check if custom CSS conflicts with Tailwind
+**2. Build Errors**
 
-For more help, check the console for detailed error messages.
+```bash
+# Clear cache
+rm -rf .next
+pnpm build
+
+# Check TypeScript errors
+pnpm type-check
+```
+
+**3. Styling Issues**
+
+```bash
+# Clear Tailwind cache
+rm -rf .next
+pnpm dev
+```
+
+### Debug Mode
+
+```bash
+# Enable debug logging
+DEBUG=* pnpm dev
+
+# Check build analyzer
+pnpm build:analyze
+```
+
+## 🚀 Deployment
+
+### Production Build
+
+```bash
+# Build for production
+pnpm build
+
+# Test production build locally
+pnpm start
+```
+
+### Environment Variables
+
+Production requires:
+
+- `NEXT_PUBLIC_API_URL`: Backend API URL
+- `NODE_ENV`: "production"
+
+## 📚 References
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React 19 Features](https://react.dev/blog/2024/04/25/react-19)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [shadcn/ui Components](https://ui.shadcn.com/)
+
+---
+
+**Development Tips:**
+
+- Use TypeScript for type safety
+- Follow the existing component patterns
+- Test responsive design on multiple devices
+- Keep components small and focused

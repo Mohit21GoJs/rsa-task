@@ -1,186 +1,297 @@
-# Deployment Guide
+# 🚀 Production Deployment Guide
 
-This guide covers the complete deployment process for the Persona Job Assistant application using GitHub Actions and Terraform for Render.io deployment.
+Complete guide for deploying the Job Application Assistant to production using GitHub Actions and Terraform.
 
-## Overview
+## 🏗️ Deployment Architecture
 
-The application uses a modern CI/CD pipeline with:
+```mermaid
+graph TB
+    A[📝 Code Push] --> B[🔍 CI Pipeline]
+    B --> C[✅ Tests & Security]
+    C --> D[📋 Terraform Plan]
+    D --> E{Review Plan}
+    E -->|Approve| F[🚀 Deploy Infrastructure]
+    E -->|Reject| G[🛑 Stop Deployment]
+    F --> H[🏥 Health Checks]
+    H --> I[✅ Deployment Complete]
 
-- **GitHub Actions** for continuous integration and deployment
-- **Terraform** for infrastructure as code
-- **Render.io** as the hosting platform
-- **Multi-environment** support (staging/production)
-- **Comprehensive security scanning** (see [Security Scanning Guide](./SECURITY-SCANNING.md))
+    subgraph "🏗️ Infrastructure"
+        J[🗄️ PostgreSQL]
+        K[🔧 Backend API]
+        L[🎨 Frontend]
+        M[⚙️ Background Worker]
+    end
 
-## Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
-│   Frontend      │    │     Backend      │    │  Temporal Worker    │
-│   (Next.js)     │───▶│    (NestJS)      │───▶│   (Background)      │
-│                 │    │                  │    │                     │
-└─────────────────┘    └──────────────────┘    └─────────────────────┘
-         │                       │                         │
-         │                       │                         │
-         ▼                       ▼                         ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Render.io                                  │
-├─────────────────┬──────────────────┬─────────────────────────────────┤
-│   Web Service   │   Web Service    │      Background Worker          │
-│   (Frontend)    │   (Backend)      │      (Temporal)                 │
-└─────────────────┴──────────────────┴─────────────────────────────────┘
-                           │
-                           ▼
-                  ┌─────────────────┐
-                  │   PostgreSQL    │
-                  │   Database      │
-                  └─────────────────┘
+    F --> J
+    F --> K
+    F --> L
+    F --> M
 ```
 
-## Prerequisites
+## 📋 Prerequisites
 
 ### 1. Required Accounts
 
 - GitHub account with repository access
-- Render.io account
-- Terraform Cloud account (for state management)
-- Google Cloud account (for Gemini API)
+- [Render.io](https://render.com) account
+- [Terraform Cloud](https://cloud.hashicorp.com/products/terraform) account
+- [Google Cloud](https://console.cloud.google.com) account (for Gemini API)
 
 ### 2. Required Tools
 
 - Terraform >= 1.6.0
-- Node.js >= 18.0.0
-- pnpm >= 8.x
 - Git
+- Access to external Temporal cluster
 
-## 🔐 Required Secrets
-
-Add these secrets to your GitHub repository (**Settings** → **Secrets and variables** → **Actions**):
-
-| Secret Name                  | Description                              | Example Value               |
-| ---------------------------- | ---------------------------------------- | --------------------------- |
-| `TF_API_TOKEN`               | Terraform Cloud API token                | `ATxxxxx...`                |
-| `RENDER_API_KEY`             | Render.io API key                        | `rnd_xxx...`                |
-| `RENDER_OWNER_ID`            | Render.io Owner ID                       | `usr_xxx...`                |
-| `TEMPORAL_ADDRESS`           | Temporal server address                  | `temporal.example.com:7233` |
-| `GEMINI_API_KEY`             | Google Gemini API key                    | `AIxxxxx...`                |
-| `GITHUB_ACCESS_TOKEN`        | GitHub token for private repo access     | `github_pat_xxx...`         |
-| `RENDER_BACKEND_SERVICE_ID`  | Backend service ID (after first deploy)  | `srv_xxx...`                |
-| `RENDER_FRONTEND_SERVICE_ID` | Frontend service ID (after first deploy) | `srv_xxx...`                |
-| `RENDER_WORKER_SERVICE_ID`   | Worker service ID (after first deploy)   | `srv_xxx...`                |
-
-## Infrastructure Setup
+## 🔐 Configuration
 
 ### 1. Terraform Cloud Setup
 
-Create a Terraform Cloud workspace for state management:
+```bash
+# 1. Create organization at https://cloud.hashicorp.com/products/terraform
+# 2. Create workspace named "job-assistant-production"
+# 3. Generate API token: Settings → API Tokens → Create API Token
+```
+
+Update your organization in `infrastructure/main.tf`:
+
+```hcl
+cloud {
+  organization = "your-org-name"  # ← Change this
+  workspaces {
+    name = "job-assistant-production"
+  }
+}
+```
+
+### 2. GitHub Secrets
+
+Add these secrets to your repository (**Settings** → **Secrets and variables** → **Actions**):
+
+| Secret                | Description                    | Example                     |
+| --------------------- | ------------------------------ | --------------------------- |
+| `TF_API_TOKEN`        | Terraform Cloud API token      | `ATxxxxx...`                |
+| `RENDER_API_KEY`      | Render.io API key              | `rnd_xxx...`                |
+| `RENDER_OWNER_ID`     | Render.io Owner ID             | `usr_xxx...`                |
+| `TEMPORAL_ADDRESS`    | External Temporal cluster      | `temporal.example.com:7233` |
+| `GEMINI_API_KEY`      | Google Gemini API key          | `AIxxxxx...`                |
+| `GITHUB_ACCESS_TOKEN` | GitHub token for private repos | `github_pat_xxx...`         |
+
+## 🚀 Deployment Options
+
+### Option 1: Automated CI/CD (Recommended)
 
 ```bash
-# 1. Create account at https://cloud.hashicorp.com/products/terraform
-# 2. Create organization (e.g., "rsa-task")
-# 3. Create workspace named "job-assistant-production"
-# 4. Generate API token: Settings → API Tokens → Create API Token
+# Push to main branch triggers the pipeline
+git add .
+git commit -m "Deploy to production"
+git push origin main
 
-# 5. Update organization in infrastructure/main.tf if needed:
-# cloud {
-#   organization = "your-org-name"
-#   workspaces {
-#     name = "job-assistant-production"
-#   }
-# }
+# Monitor the pipeline at:
+# https://github.com/your-org/rsa-task/actions
 ```
 
-### 2. Environment Configuration
+**Pipeline Steps:**
 
-The infrastructure supports two environments:
+1. **🔍 CI Tests**: Run tests, linting, security scans
+2. **📋 Terraform Plan**: Show infrastructure changes
+3. **👤 Manual Approval**: Review and approve changes
+4. **🚀 Deploy**: Apply infrastructure changes
+5. **🏥 Health Checks**: Verify services are healthy
 
-#### Staging Environment
-
-- **Branch**: `develop`
-- **Auto-deploy**: Enabled
-- **Resources**: Starter plans (cost-effective)
-- **Domain**: `*.onrender.com`
-
-#### Production Environment
-
-- **Branch**: `main`
-- **Auto-deploy**: Disabled (manual approval required)
-- **Resources**: Pro plans (high availability)
-- **Domain**: Custom domains (optional)
-
-## Deployment Process
-
-### 1. Manual Deployment
-
-Use the deployment script for manual deployments:
+### Option 2: Manual Deployment
 
 ```bash
-# Make script executable
-chmod +x scripts/deploy-terraform.sh
+# 1. Set environment variables
+export TF_VAR_render_api_key="rnd_xxxxxxxxxxxxx"
+export TF_VAR_render_owner_id="usr_xxxxxxxxxxxxx"
+export TF_VAR_gemini_api_key="AIzaxxxxxxxxxxxxxxxxx"
+export TF_VAR_temporal_address="your-external-temporal:7233"
+export TF_VAR_github_access_token="github_pat_xxxxxxxxxxxxx"
 
-# Deploy to staging
-./scripts/deploy-terraform.sh staging plan
-./scripts/deploy-terraform.sh staging apply
+# 2. Deploy infrastructure
+cd infrastructure
+terraform init
+terraform plan    # Review changes
+terraform apply   # Apply changes
 
-# Deploy to production
-./scripts/deploy-terraform.sh production plan
-./scripts/deploy-terraform.sh production apply
+# 3. Get service URLs
+terraform output
 ```
 
-### 2. Automated Deployment
+## 📊 Service Configuration
 
-The CI/CD pipeline automatically triggers on:
+### Resource Plans
 
-#### Continuous Integration (CI)
+Edit `infrastructure/terraform.tfvars`:
 
-- **Trigger**: All pull requests and pushes
-- **Actions**:
-  - Security scanning (Trivy)
-  - Code quality checks (ESLint, Prettier)
-  - Unit and E2E tests
-  - Build validation
-  - Docker security scanning
+```hcl
+# Development/Testing
+backend_plan  = "starter"
+frontend_plan = "starter"
+database_plan = "starter"
 
-#### Continuous Deployment (CD)
+# Production
+backend_plan  = "pro"
+frontend_plan = "pro"
+database_plan = "pro"
 
-- **Staging**: Automatic deployment on push to `develop`
-- **Production**: Automatic deployment on push to `main`
-- **Manual**: Via GitHub Actions workflow_dispatch
-
-### 3. Deployment Workflow
-
-```mermaid
-graph TD
-    A[Code Push] --> B[CI Pipeline]
-    B --> C{CI Passed?}
-    C -->|No| D[Block Deployment]
-    C -->|Yes| E[Terraform Plan]
-    E --> F[Infrastructure Apply]
-    F --> G[Deploy Backend]
-    G --> H[Deploy Frontend]
-    H --> I[Deploy Worker]
-    I --> J[Health Checks]
-    J --> K{Healthy?}
-    K -->|No| L[Rollback]
-    K -->|Yes| M[Deployment Complete]
+# Scaling
+backend_instances  = 2
+frontend_instances = 2
+worker_instances   = 2
 ```
 
-## Service Configuration
+### Environment Variables
 
-### Backend Service (NestJS)
+The infrastructure automatically configures:
 
-- **Runtime**: Node.js 18
-- **Build Command**: `pnpm install --frozen-lockfile && pnpm run build:backend`
-- **Start Command**: `cd backend && node dist/src/main.js`
-- **Health Check**: `/api/health`
+**Backend Environment:**
 
-### Frontend Service (Next.js)
+- `NODE_ENV`: production
+- `PORT`: 3000
+- `TEMPORAL_ADDRESS`: Your external cluster
+- `GEMINI_API_KEY`: From secrets
+- Database connection variables
 
-- **Runtime**: Node.js 18
-- **Build Command**: `cd .. && pnpm install --frozen-lockfile && pnpm run build:frontend`
-- **Start Command**: `cd frontend && npm start`
+**Frontend Environment:**
 
-### Worker Service (Temporal)
+- `NODE_ENV`: production
+- `NEXT_PUBLIC_API_URL`: Backend service URL
+- `PORT`: 3000
 
-- **Runtime**: Node.js 18
-- **Build Command**: `pnpm install --frozen-lockfile && pnpm run build:backend`
+## 🔍 Monitoring & Health
+
+### Health Endpoints
+
+```bash
+# Backend API health
+curl https://your-backend-url/api/health
+
+# Database connectivity
+curl https://your-backend-url/api/health/db
+
+# Temporal worker status
+curl https://your-backend-url/api/health/temporal
+```
+
+### Monitoring Dashboards
+
+- **Render Dashboard**: Service health and logs
+- **Temporal UI**: Workflow execution monitoring
+- **GitHub Actions**: Deployment pipeline status
+
+## 💰 Cost Estimation
+
+### Monthly Costs (USD)
+
+| Service           | Starter | Pro      |
+| ----------------- | ------- | -------- |
+| Backend API       | $7      | $25      |
+| Frontend          | $7      | $25      |
+| Background Worker | $7      | $25      |
+| PostgreSQL        | $7      | $25      |
+| **Total**         | **$28** | **$100** |
+
+_Note: Temporal cluster costs are separate_
+
+## 🔄 Rollback & Recovery
+
+### Automatic Rollback
+
+Services automatically rollback on:
+
+- Health check failures
+- Startup errors
+- Critical exceptions
+
+### Manual Rollback
+
+```bash
+# Rollback specific service
+cd infrastructure
+terraform plan -destroy -target=render_web_service.backend
+terraform apply
+
+# Complete rollback
+terraform destroy
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**1. Authentication Failures**
+
+```bash
+# Test credentials
+curl -H "Authorization: Bearer $RENDER_API_KEY" \
+     https://api.render.com/v1/services
+```
+
+**2. Service Won't Start**
+
+- Check service logs in Render Dashboard
+- Verify environment variables
+- Check build commands and dependencies
+
+**3. Database Connection Issues**
+
+- Verify database credentials
+- Check network connectivity
+- Review connection pool settings
+
+**4. Temporal Worker Issues**
+
+- Verify `TEMPORAL_ADDRESS` is correct
+- Check external Temporal cluster status
+- Review worker logs
+
+### Debug Commands
+
+```bash
+# Check service status
+terraform show
+
+# View service logs
+# (Access through Render Dashboard)
+
+# Test API endpoints
+curl -I https://your-backend-url/api/health
+```
+
+## 📈 Scaling Guide
+
+### Horizontal Scaling
+
+```hcl
+# In terraform.tfvars
+backend_instances = 3
+frontend_instances = 2
+worker_instances = 2
+```
+
+### Vertical Scaling
+
+```hcl
+# Upgrade to higher performance plans
+backend_plan = "pro-plus"
+frontend_plan = "pro"
+database_plan = "pro"
+```
+
+## 🔒 Security Best Practices
+
+- 🔐 **Secrets Management**: Use GitHub Secrets for sensitive data
+- 🛡️ **Environment Isolation**: Separate staging and production
+- 📝 **Audit Logging**: Monitor all deployment activities
+- 🔍 **Security Scanning**: Automated vulnerability detection
+- 🔒 **Access Control**: Limit who can approve deployments
+
+---
+
+**Next Steps:**
+
+- Review the [Troubleshooting Guide](TROUBLESHOOTING.md)
+- Check [Security Policy](../SECURITY.md)
+- Monitor your deployed services
