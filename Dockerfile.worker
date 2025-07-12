@@ -1,4 +1,4 @@
-# Temporal Worker Dockerfile
+# Background Worker Dockerfile
 FROM node:18-alpine AS base
 
 # Install pnpm
@@ -52,7 +52,7 @@ USER worker
 
 # Health check for worker process
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD pgrep -f "temporal-worker" || exit 1
+  CMD pgrep -f "worker" || exit 1
 
-# Start the Temporal worker
+# Start the background worker
 CMD ["node", "dist/worker/temporal-worker.js"] 

@@ -8,11 +8,6 @@ output "frontend_url" {
   value       = "https://${render_web_service.frontend.url}"
 }
 
-output "temporal_url" {
-  description = "URL of the deployed Temporal server"
-  value       = "https://${render_web_service.temporal.url}"
-}
-
 output "worker_url" {
   description = "URL of the deployed worker service"
   value       = "https://${render_web_service.worker.url}"
@@ -33,11 +28,6 @@ output "frontend_service_id" {
   value       = render_web_service.frontend.id
 }
 
-output "temporal_service_id" {
-  description = "Render service ID for the Temporal server"
-  value       = render_web_service.temporal.id
-}
-
 output "worker_service_id" {
   description = "Render service ID for the worker"
   value       = render_web_service.worker.id
@@ -56,11 +46,6 @@ output "backend_env_group_id" {
 output "frontend_env_group_id" {
   description = "Environment group ID for the frontend service"
   value       = render_env_group.frontend.id
-}
-
-output "temporal_env_group_id" {
-  description = "Environment group ID for the Temporal service"
-  value       = render_env_group.temporal.id
 }
 
 output "worker_env_group_id" {

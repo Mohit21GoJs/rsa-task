@@ -168,7 +168,7 @@ jobs:
           echo "- 🗄️ **Database**: job-assistant-db (PostgreSQL)" >> $GITHUB_STEP_SUMMARY
           echo "- 🔧 **Backend**: job-assistant-backend (NestJS API)" >> $GITHUB_STEP_SUMMARY
           echo "- 🎨 **Frontend**: job-assistant-frontend (Next.js)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⚙️ **Worker**: job-assistant-worker (Temporal)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️ **Worker**: job-assistant-worker (Background Jobs)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔍 **Monitor services**: https://dashboard.render.com" >> $GITHUB_STEP_SUMMARY
 

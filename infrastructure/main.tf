@@ -133,45 +133,6 @@ resource "render_postgres" "database" {
   database_user = "app_user"
 }
 
-# Temporal Server Service
-resource "render_web_service" "temporal" {
-  name   = "${local.app_name}-temporal"
-  plan   = var.backend_plan # Use same plan as backend
-  region = var.region
-
-  # Runtime source configuration
-  runtime_source = {
-    docker = {
-      auto_deploy = var.auto_deploy_enabled
-      branch      = var.github_branch
-      repo_url    = "https://github.com/Mohit21GoJs/rsa-task"
-
-      # Use our custom Temporal Docker configuration
-      dockerfile_path = "temporal/Dockerfile"
-      docker_context  = "."
-
-      # GitHub authentication for private repository access
-      github_repo = var.github_access_token != "" ? {
-        access_token = var.github_access_token
-        } : var.github_app_id != "" ? {
-        app_id          = var.github_app_id
-        installation_id = var.github_app_installation_id
-        private_key     = var.github_app_private_key
-      } : null
-    }
-  }
-
-  # Resource limits
-  num_instances = 1
-
-  # Disk for Temporal data
-  disk = {
-    name       = "${local.app_name}-temporal-disk"
-    size_gb    = 1
-    mount_path = "/data"
-  }
-}
-
 # Worker Service
 resource "render_web_service" "worker" {
   name   = local.worker_service_name
@@ -225,7 +186,7 @@ resource "render_env_group" "backend" {
       value = "3000"
     }
     TEMPORAL_ADDRESS = {
-      value = "${render_web_service.temporal.url}:7233"
+      value = var.temporal_address
     }
     TEMPORAL_NAMESPACE = {
       value = var.temporal_namespace
@@ -283,38 +244,6 @@ resource "render_env_group" "frontend" {
   }
 }
 
-# Temporal Environment Group
-resource "render_env_group" "temporal" {
-  name = "${local.app_name}-temporal-env"
-
-  env_vars = {
-    TEMPORAL_ADDRESS = {
-      value = "0.0.0.0:7233"
-    }
-    TEMPORAL_UI_ADDRESS = {
-      value = "0.0.0.0:8080"
-    }
-    DB = {
-      value = "postgresql"
-    }
-    TEMPORAL_NAMESPACE = {
-      value = var.temporal_namespace
-    }
-    TEMPORAL_LOG_LEVEL = {
-      value = "info"
-    }
-    TEMPORAL_BIND_ON_IP = {
-      value = "0.0.0.0"
-    }
-    TEMPORAL_AUTO_SETUP = {
-      value = "true"
-    }
-    TEMPORAL_VISIBILITY_AUTO_SETUP = {
-      value = "true"
-    }
-  }
-}
-
 # Worker Environment Group
 resource "render_env_group" "worker" {
   name = "${local.worker_service_name}-env"
@@ -324,7 +253,7 @@ resource "render_env_group" "worker" {
       value = var.environment == "production" ? "production" : "staging"
     }
     TEMPORAL_ADDRESS = {
-      value = "${render_web_service.temporal.url}:7233"
+      value = var.temporal_address
     }
     TEMPORAL_NAMESPACE = {
       value = var.temporal_namespace
@@ -359,11 +288,6 @@ resource "render_env_group_link" "backend" {
 resource "render_env_group_link" "frontend" {
   env_group_id = render_env_group.frontend.id
   service_ids  = [render_web_service.frontend.id]
-}
-
-resource "render_env_group_link" "temporal" {
-  env_group_id = render_env_group.temporal.id
-  service_ids  = [render_web_service.temporal.id]
 }
 
 resource "render_env_group_link" "worker" {

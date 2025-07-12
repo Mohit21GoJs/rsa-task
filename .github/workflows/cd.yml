@@ -382,7 +382,7 @@ jobs:
 
   # Worker deployment
   deploy-worker:
-    name: 🔄 Deploy Temporal Worker
+    name: 🔄 Deploy Background Worker
     runs-on: ubuntu-latest
     needs: [setup, infrastructure, deploy-backend]
     if: needs.setup.outputs.should_deploy == 'true'
@@ -433,8 +433,8 @@ jobs:
             exit 1
           fi
           
-          # Temporal worker connectivity
-          temporal_health=$(curl -s "${{ needs.deploy-backend.outputs.deployment_url }}/api/health/temporal" || echo "failed")
+          # Background worker connectivity
+          worker_health=$(curl -s "${{ needs.deploy-backend.outputs.deployment_url }}/api/health/temporal" || echo "failed")
           if [[ "$temporal_health" == *"healthy"* ]]; then
             echo "✅ Temporal connection: Healthy" >> $GITHUB_STEP_SUMMARY
           else

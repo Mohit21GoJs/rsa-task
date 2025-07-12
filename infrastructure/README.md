@@ -1,131 +1,176 @@
-# Infrastructure Setup
+# Job Application Assistant - Infrastructure
 
-This directory contains Terraform configuration for deploying the RSA Task application to Render.
+This directory contains the Terraform configuration for deploying the Job Application Assistant to Render.io.
 
-## Prerequisites
+## 🏗️ Infrastructure Overview
 
-### 1. Render Account Setup
-- Create a Render account and obtain API credentials
-- Set up the required environment variables for Terraform
+The infrastructure deploys the following services:
 
-### 2. Terraform Variables
+- **🗄️ PostgreSQL Database** - Stores job applications and user data
+- **🔧 Backend API** - NestJS API server with health checks
+- **🎨 Frontend** - Next.js web application
+- **⚙️ Background Worker** - Background job processing using external Temporal cluster
 
-Create a `terraform.tfvars` file with your specific values:
+## 🔧 Configuration
+
+### Required Variables
+
+Set these in your `terraform.tfvars` file:
 
 ```hcl
-# Render Configuration
-render_api_key = "your-render-api-key"
-render_owner_id = "your-render-owner-id"
+# Render.io Configuration
+render_api_key = "rnd_xxxxxxxxxxxxx"
+render_owner_id = "usr_xxxxxxxxxxxxx"
 
-# GitHub Configuration
-github_access_token = "your-github-token"
-# OR use GitHub App (recommended for production)
-github_app_id = "your-github-app-id"
-github_app_installation_id = "your-installation-id"
-github_app_private_key = "your-private-key"
-
-# Application Configuration
-environment = "production"
-gemini_api_key = "your-gemini-api-key"
+# External Services
+gemini_api_key = "AIzaxxxxxxxxxxxxxxxxx"
+temporal_address = "your-external-temporal:7233"
 temporal_namespace = "default"
-allowed_origins = ["https://your-frontend-domain.com"]
 
-# Resource Configuration
+# GitHub Integration
+github_access_token = "github_pat_xxxxxxxxxxxxx"
+```
+
+### Optional Variables
+
+```hcl
+# Environment
+environment = "production"  # or "staging"
+
+# Service Plans
 backend_plan = "starter"
 frontend_plan = "starter"
 worker_plan = "starter"
 database_plan = "starter"
 
-# Optional Configuration
-grace_period_days = 7
-default_deadline_weeks = 2
-auto_deploy_enabled = true
-github_branch = "main"
+# Scaling
+backend_instances = 1
+frontend_instances = 1
+worker_instances = 1
 ```
 
-## Deployment Process
+## 🚀 Deployment
 
-1. **Initialize Terraform**: `terraform init`
-2. **Plan Deployment**: `terraform plan`
-3. **Apply Configuration**: `terraform apply`
+### Prerequisites
 
-The Terraform configuration will automatically:
-- Create all the required services
-- Create environment groups with all necessary variables
-- Link environment groups to their respective services
-- Set up proper dependencies between services
+1. **Terraform Cloud Account**: Create account and workspace
+2. **Render.io Account**: Get API key and owner ID
+3. **External Temporal Cluster**: Set up your Temporal cluster
+4. **GitHub Access Token**: For private repository deployment
 
-## Environment Groups Created
+### Local Deployment
 
-The following environment groups are automatically created and managed by Terraform:
+```bash
+# Initialize Terraform
+terraform init
+
+# Plan changes
+terraform plan
+
+# Apply changes
+terraform apply
+```
+
+### CI/CD Deployment
+
+The infrastructure is automatically deployed via GitHub Actions when changes are pushed to the main branch.
+
+## 📊 Environment Groups
 
 ### 1. Backend Environment Group (`job-assistant-backend-env`)
 - `NODE_ENV`: production/staging
 - `PORT`: 3000
-- `TEMPORAL_ADDRESS`: Automatically set to temporal service URL
+- `TEMPORAL_ADDRESS`: External Temporal server address
 - `TEMPORAL_NAMESPACE`: From variables
 - `GEMINI_API_KEY`: From variables
-- `GRACE_PERIOD_DAYS`: From variables
-- `DEFAULT_DEADLINE_WEEKS`: From variables
-- `DATABASE_NAME`: Automatically set to database name
-- `CORS_ORIGINS`: From allowed_origins variable
-- `TRUST_PROXY`: true
-- `HELMET_ENABLED`: true
-- `RATE_LIMIT_ENABLED`: Environment-dependent
-- `LOG_LEVEL`: Environment-dependent
-- `ENABLE_REQUEST_LOGGING`: true
+- `DATABASE_NAME`: From database resource
 
 ### 2. Frontend Environment Group (`job-assistant-frontend-env`)
 - `NODE_ENV`: production/staging
-- `NEXT_PUBLIC_API_URL`: Automatically set to backend service URL
+- `NEXT_PUBLIC_API_URL`: Backend service URL
 - `PORT`: 3000
-- `NEXT_PUBLIC_APP_ENV`: From environment variable
 
-### 3. Temporal Environment Group (`job-assistant-temporal-env`)
-- `TEMPORAL_ADDRESS`: 0.0.0.0:7233
-- `TEMPORAL_UI_ADDRESS`: 0.0.0.0:8080
-- `DB`: postgresql
-- `TEMPORAL_NAMESPACE`: From variables
-- `TEMPORAL_LOG_LEVEL`: info
-- `TEMPORAL_BIND_ON_IP`: 0.0.0.0
-- `TEMPORAL_AUTO_SETUP`: true
-- `TEMPORAL_VISIBILITY_AUTO_SETUP`: true
-
-### 4. Worker Environment Group (`job-assistant-worker-env`)
+### 3. Worker Environment Group (`job-assistant-worker-env`)
 - `NODE_ENV`: production/staging
-- `TEMPORAL_ADDRESS`: Automatically set to temporal service URL
+- `TEMPORAL_ADDRESS`: External Temporal server address
 - `TEMPORAL_NAMESPACE`: From variables
 - `GEMINI_API_KEY`: From variables
-- `GRACE_PERIOD_DAYS`: From variables
-- `DEFAULT_DEADLINE_WEEKS`: From variables
-- `DATABASE_NAME`: Automatically set to database name
-- `LOG_LEVEL`: Environment-dependent
-- `ENABLE_REQUEST_LOGGING`: true
+- `DATABASE_NAME`: From database resource
 
-## Architecture
+## 🔗 Outputs
 
-The infrastructure includes:
-- **Backend API Service**: Node.js REST API
+After deployment, Terraform provides:
+
+- **Service URLs**: Backend, frontend, and worker URLs
+- **Service IDs**: Render service IDs for management
+- **Environment Group IDs**: For configuration management
+
+## 📋 Services
+
+- **Database**: PostgreSQL database for application data
+- **Backend Service**: NestJS API server
 - **Frontend Service**: Next.js web application
-- **Temporal Service**: Workflow orchestration
-- **Worker Service**: Background job processing
-- **PostgreSQL Database**: Data storage
-- **Environment Groups**: Centralized environment variable management
+- **Background Worker Service**: Background job processing with external Temporal
 
-## Environment Variables Management
+## 🔍 Monitoring
 
-This setup uses Render's Environment Groups feature through Terraform, which provides:
-- **Fully automated setup**: No manual configuration required
-- **Centralized management**: All variables managed in one place
-- **Automatic linking**: Environment groups are automatically linked to services
-- **Dynamic values**: Service URLs and database names are automatically populated
-- **Version control**: Environment configuration is tracked in Git
-- **Reproducible deployments**: Same configuration can be deployed to multiple environments
+Monitor your services at:
+- **Render Dashboard**: https://dashboard.render.com
+- **Service Health**: Use the health check endpoints
+- **External Temporal UI**: Check your Temporal cluster dashboard
 
-## Security Considerations
+## 🛠️ Troubleshooting
 
-- All sensitive variables should be stored in `terraform.tfvars` (not committed to Git)
-- Use GitHub App authentication for production deployments
-- The configuration automatically enables security headers and rate limiting in production
-- Regularly rotate API keys and secrets
-- Consider using Terraform Cloud or similar for secure variable storage in CI/CD 
+### Common Issues
+
+1. **Service won't start**: Check environment variables and build logs
+2. **Database connection errors**: Verify database credentials
+3. **External Temporal connection**: Verify `TEMPORAL_ADDRESS` configuration
+4. **Build failures**: Check package.json dependencies
+
+### Health Checks
+
+```bash
+# Backend health
+curl https://your-backend-url/api/health
+
+# Database health
+curl https://your-backend-url/api/health/db
+
+# Background worker health
+curl https://your-backend-url/api/health/worker
+```
+
+## 🔄 Scaling
+
+To scale your services:
+
+```hcl
+# In terraform.tfvars
+backend_instances = 2
+frontend_instances = 2
+worker_instances = 2
+
+# Higher performance plans
+backend_plan = "pro"
+frontend_plan = "pro"
+worker_plan = "pro"
+```
+
+## 🚨 Emergency Procedures
+
+### Scale Down
+```bash
+terraform apply -var="backend_instances=1" -var="worker_instances=1"
+```
+
+### Destroy Infrastructure
+```bash
+terraform destroy
+```
+
+## 📚 Resources
+
+- [Render.io Documentation](https://docs.render.com)
+- [Terraform Provider for Render](https://registry.terraform.io/providers/render-oss/render/latest)
+- [Temporal Documentation](https://docs.temporal.io) (for external cluster setup) 

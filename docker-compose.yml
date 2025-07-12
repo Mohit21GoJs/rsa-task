@@ -18,54 +18,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Redis for Temporal
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Temporal Server
-  temporal:
-    image: temporalio/auto-setup:1.22.0
-    environment:
-      - DB=postgresql
-      - DB_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PWD=postgres
-      - POSTGRES_SEEDS=postgres
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
-    ports:
-      - "7233:7233"
-      - "8233:8233"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./temporal:/etc/temporal/config/dynamicconfig
-    healthcheck:
-      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
-  # Temporal Web UI
-  temporal-web:
-    container_name: temporal-ui
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    image: temporalio/ui:2.21.3
-    ports:
-      - "8080:8080"
-
   # Main Application
   app:
     build:
@@ -80,12 +32,11 @@ services:
       - DATABASE_USERNAME=postgres
       - DATABASE_PASSWORD=postgres
       - DATABASE_NAME=job_assistant
-      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS:-localhost:7233}
+      - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE:-default}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-your_gemini_api_key_here}
     depends_on:
       postgres:
-        condition: service_healthy
-      temporal:
         condition: service_healthy
     volumes:
       - .:/app

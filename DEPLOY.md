@@ -4,12 +4,12 @@ This guide shows you how to deploy your Job Application Assistant to Render.io u
 
 ## ✨ What This Deploys
 
-Your application will be deployed as 4 services on Render.io using Terraform:
+Your application will be deployed as 3 services on Render.io using Terraform:
 
 1. **🗄️ PostgreSQL Database** - Stores job applications and user data
 2. **🔧 Backend API** - NestJS API server with health checks
 3. **🎨 Frontend** - Next.js web application  
-4. **⚙️ Temporal Worker** - Background job processing
+4. **⚙️ Background Worker** - Background job processing using external Temporal cluster
 
 ## 🏗️ Infrastructure as Code Benefits
 
@@ -36,7 +36,7 @@ Your application will be deployed as 4 services on Render.io using Terraform:
 |---------|------------|
 | **Render API Key** | [Render Account Settings](https://dashboard.render.com/account) → Create API Key |
 | **Gemini API Key** | [Google AI Studio](https://makersuite.google.com/app/apikey) → Create API Key |
-| **Temporal Address** | Your Temporal cluster endpoint (or use `localhost:7233` for testing) |
+| **Temporal Address** | Your external Temporal cluster endpoint |
 
 ### 3. Update Terraform Configuration
 
@@ -59,11 +59,11 @@ TF_API_TOKEN=tfc_xxxxxxxxxxxxx               # Terraform Cloud API token
 RENDER_API_KEY=rnd_xxxxxxxxxxxxx             # Render.io API key
 RENDER_OWNER_ID=usr_xxxxxxxxxxxxx            # Render.io Owner ID
 GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxx         # Google Gemini API key
-TEMPORAL_ADDRESS=your-temporal-endpoint:7233 # Temporal server
+TEMPORAL_ADDRESS=your-external-temporal:7233 # External Temporal server
 GITHUB_ACCESS_TOKEN=github_pat_xxxxxxxxxxxxx # GitHub token for private repos
 ```
 
-**Note:** No AWS credentials needed! Terraform Cloud handles all state management automatically.
+**Note:** No AWS credentials or self-hosted Temporal infrastructure needed! Terraform Cloud handles all state management automatically, and the application connects to your external Temporal cluster.
 
 ## 🚀 Deployment Process
 
@@ -104,9 +104,8 @@ GITHUB_ACCESS_TOKEN=github_pat_xxxxxxxxxxxxx # GitHub token for private repos
 export TF_VAR_render_api_key="rnd_xxxxxxxxxxxxx"
 export TF_VAR_render_owner_id="usr_xxxxxxxxxxxxx"
 export TF_VAR_gemini_api_key="AIzaxxxxxxxxxxxxxxxxx"
-export TF_VAR_temporal_address="your-temporal-endpoint:7233"
+export TF_VAR_temporal_address="your-external-temporal:7233"
 export TF_VAR_github_access_token="github_pat_xxxxxxxxxxxxx"
-export TF_VAR_github_repo_url="https://github.com/mohityadav/rsa-task"
 
 # 2. Navigate to infrastructure directory
 cd infrastructure
@@ -152,6 +151,8 @@ Using **Starter** plans for all services:
 - Worker (Background Worker): ~$7/month
 
 **Total: ~$28/month** (Terraform Cloud free tier included)
+
+*Note: Temporal cluster costs are separate and depend on your chosen provider.*
 
 ## 🛠️ Configuration Management
 
@@ -199,59 +200,60 @@ enable_high_availability = true
 ### View Infrastructure State
 ```bash
 cd infrastructure
-terraform show          # View current state
-terraform plan          # See pending changes
-terraform output        # Get service URLs
+terraform show
+```
+
+### Check Service Health
+```bash
+# Backend health
+curl https://your-backend-url/api/health
+
+# Database health
+curl https://your-backend-url/api/health/db
+
+# Background worker health
+curl https://your-backend-url/api/health/worker
 ```
 
 ### Common Issues
 
-1. **Plan Fails**:
-   - Check API keys are set correctly
-   - Verify Terraform Cloud workspace exists
-   - Ensure you have permissions
+1. **Worker not connecting to Temporal**: Verify `TEMPORAL_ADDRESS` environment variable
+2. **Database connection issues**: Check database credentials and network access
+3. **Build failures**: Ensure all dependencies are listed in package.json
 
-2. **Apply Fails**:
-   - Check Render.io service limits
-   - Verify GitHub repository URL is correct
-   - Check service names aren't already taken
+## 🔄 Rollback Procedures
 
-3. **Services Won't Start**:
-   - Check build logs in Render dashboard
-   - Verify environment variables
-   - Ensure database is ready before app starts
+### Automatic Rollback
+Production deployments have automatic rollback on health check failures.
 
-### Rollback Procedure
-
-If deployment fails:
-
+### Manual Rollback
 ```bash
-# Option 1: Revert Git changes
-git revert <commit-hash>
-git push origin main
-
-# Option 2: Terraform rollback
+# Rollback to previous version
 cd infrastructure
-terraform plan    # Plan the rollback
-terraform apply   # Apply previous state
+terraform plan -destroy -target=render_web_service.backend
+terraform apply
+
+# Or rollback via GitHub Actions
+gh workflow run cd.yml --field environment=production --field rollback=true
 ```
 
-## 🎯 Next Steps
+## 🚨 Emergency Procedures
 
-After successful deployment:
+### Scale Down Services
+```bash
+# Scale to minimum resources
+terraform apply -var="backend_instances=1" -var="worker_instances=1"
+```
 
-1. **Monitor Services**: https://dashboard.render.com
-2. **Set Custom Domains**: Add your domains in Render dashboard
-3. **Configure Alerts**: Set up monitoring and notifications
-4. **Scale Resources**: Upgrade plans as usage grows
-5. **Backup Strategy**: Configure database backups
+### Complete Infrastructure Destruction
+```bash
+# ⚠️ DANGER: This will destroy everything
+terraform destroy
+```
 
-## 🆘 Support
+## 📚 Additional Resources
 
-- **Terraform Cloud**: [Terraform Cloud Docs](https://developer.hashicorp.com/terraform/cloud-docs)
-- **Render.io**: [Render Documentation](https://render.com/docs)
-- **GitHub Actions**: [Actions Documentation](https://docs.github.com/en/actions)
-
----
-
-**🎉 That's it!** Your Job Application Assistant is now deployed using modern Infrastructure as Code practices with full visibility into changes before they're applied. 
+- [Render.io Documentation](https://docs.render.com)
+- [Terraform Cloud Documentation](https://cloud.hashicorp.com/docs/terraform)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Temporal Documentation](https://docs.temporal.io) (for external cluster setup) 

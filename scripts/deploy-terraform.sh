@@ -1,16 +1,9 @@
 #!/bin/bash
-
-# Terraform deployment script for Render.io
-# Usage: ./scripts/deploy-terraform.sh [plan|apply|destroy|output]
+# Terraform deployment script for Render.io infrastructure
 
 set -euo pipefail
 
-# Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-INFRASTRUCTURE_DIR="$ROOT_DIR/infrastructure"
-
-# Colors for output
+# Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -19,255 +12,126 @@ NC='\033[0m' # No Color
 
 # Logging functions
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+  echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+  echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+  echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+  echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Help function
-show_help() {
-    cat << EOF
-Terraform Deployment Script for Render.io
+# Check if Terraform is installed
+if ! command -v terraform &> /dev/null; then
+  log_error "Terraform is not installed. Please install Terraform first."
+  exit 1
+fi
 
-Usage: $0 [command]
+# Check if we're in the correct directory
+if [[ ! -f "infrastructure/main.tf" ]]; then
+  log_error "Please run this script from the project root directory."
+  exit 1
+fi
 
-COMMANDS:
-    plan        Create and show deployment plan
-    apply       Apply infrastructure changes (after plan)
-    destroy     Destroy all infrastructure (use with caution)
-    output      Show Terraform outputs (service URLs)
-    validate    Validate Terraform configuration
-    init        Initialize Terraform (first-time setup)
+# Change to infrastructure directory
+cd infrastructure
 
-EXAMPLES:
-    $0 plan     # See what will change
-    $0 apply    # Deploy the changes
-    $0 output   # Get service URLs
+# Check required environment variables
+log_info "Checking required environment variables..."
 
-REQUIREMENTS:
-    - Terraform >= 1.6.0
-    - Terraform Cloud account configured
-    - Required environment variables set
+required_vars=(
+  "TF_VAR_render_api_key"
+  "TF_VAR_render_owner_id"
+  "TF_VAR_gemini_api_key"
+  "TF_VAR_github_access_token"
+)
 
-ENVIRONMENT VARIABLES:
-    TF_VAR_render_api_key       - Render.io API key
-    TF_VAR_render_owner_id      - Render.io Owner ID
-    TF_VAR_gemini_api_key       - Google Gemini API key
-    TF_VAR_temporal_address     - Temporal server address
-    TF_VAR_github_access_token  - GitHub access token for private repos
-    TF_VAR_github_repo_url      - GitHub repository URL
-
+# Documentation for required variables
+log_info "Required environment variables:"
+cat << EOF
+TF_VAR_render_api_key       - Render.io API key
+TF_VAR_render_owner_id      - Render.io owner ID
+TF_VAR_gemini_api_key       - Google Gemini API key
+TF_VAR_github_access_token  - GitHub access token for private repos
+TF_VAR_temporal_address     - External Temporal server address
+TF_VAR_temporal_namespace   - Temporal namespace (optional)
+TF_VAR_environment          - Environment name (optional)
+TF_VAR_github_branch        - GitHub branch to deploy (optional)
 EOF
-}
 
-# Check requirements
-check_requirements() {
-    log_info "Checking requirements..."
-    
-    # Check Terraform
-    if ! command -v terraform &> /dev/null; then
-        log_error "Terraform is required but not installed"
-        log_info "Install from: https://terraform.io/downloads"
-        exit 1
-    fi
-    
-    local tf_version=$(terraform version -json | jq -r '.terraform_version')
-    log_info "Terraform version: $tf_version"
-    
-    # Check required environment variables
-    if [[ -z "${TF_VAR_render_api_key:-}" ]]; then
-        log_error "TF_VAR_render_api_key environment variable is required"
-        log_info "Get your API key from: https://dashboard.render.com/account"
-        exit 1
-    fi
-    
-    if [[ -z "${TF_VAR_render_owner_id:-}" ]]; then
-        log_error "TF_VAR_render_owner_id environment variable is required"
-        log_info "Get your Render Owner ID from: https://dashboard.render.com/account/settings"
-        exit 1
-    fi
-    
-    if [[ -z "${TF_VAR_gemini_api_key:-}" ]]; then
-        log_warning "TF_VAR_gemini_api_key not set - AI features will be disabled"
-    fi
-    
-    if [[ -z "${TF_VAR_temporal_address:-}" ]]; then
-        log_warning "TF_VAR_temporal_address not set - using default localhost:7233"
-    fi
-    
-    if [[ -z "${TF_VAR_github_access_token:-}" ]]; then
-        log_warning "TF_VAR_github_access_token not set - GitHub integration will be disabled"
-    fi
-    
-    if [[ -z "${TF_VAR_github_repo_url:-}" ]]; then
-        log_warning "TF_VAR_github_repo_url not set - GitHub integration will be disabled"
-    fi
-    
-    log_success "Requirements check completed"
-}
+missing_vars=()
+for var in "${required_vars[@]}"; do
+  if [[ -z "${!var:-}" ]]; then
+    missing_vars+=("$var")
+  fi
+done
+
+if [[ ${#missing_vars[@]} -gt 0 ]]; then
+  log_error "Missing required environment variables:"
+  for var in "${missing_vars[@]}"; do
+    echo "  - $var"
+  done
+  exit 1
+fi
+
+# Optional variables with defaults
+if [[ -z "${TF_VAR_environment:-}" ]]; then
+  export TF_VAR_environment="production"
+  log_info "TF_VAR_environment not set - using default: production"
+fi
+
+if [[ -z "${TF_VAR_github_branch:-}" ]]; then
+  export TF_VAR_github_branch="main"
+  log_info "TF_VAR_github_branch not set - using default: main"
+fi
+
+if [[ -z "${TF_VAR_temporal_address:-}" ]]; then
+  log_warning "TF_VAR_temporal_address not set - using default localhost:7233"
+  export TF_VAR_temporal_address="localhost:7233"
+fi
+
+if [[ -z "${TF_VAR_temporal_namespace:-}" ]]; then
+  export TF_VAR_temporal_namespace="default"
+  log_info "TF_VAR_temporal_namespace not set - using default: default"
+fi
 
 # Initialize Terraform
-terraform_init() {
-    log_info "Initializing Terraform..."
-    cd "$INFRASTRUCTURE_DIR"
-    
-    terraform init
-    
-    log_success "Terraform initialized"
-}
+log_info "Initializing Terraform..."
+terraform init
 
-# Validate Terraform configuration
-terraform_validate() {
-    log_info "Validating Terraform configuration..."
-    cd "$INFRASTRUCTURE_DIR"
-    
-    terraform fmt -check -recursive
-    terraform validate
-    
-    log_success "Terraform configuration is valid"
-}
+# Validate configuration
+log_info "Validating Terraform configuration..."
+terraform validate
 
-# Create Terraform plan
-terraform_plan() {
-    log_info "Creating Terraform plan..."
-    cd "$INFRASTRUCTURE_DIR"
-    
-    terraform plan -detailed-exitcode -out=tfplan
-    local exit_code=$?
-    
-    if [ $exit_code -eq 0 ]; then
-        log_info "No changes required"
-    elif [ $exit_code -eq 2 ]; then
-        log_info "Changes detected - plan saved to tfplan"
-        log_warning "Review the plan above before running 'apply'"
-    else
-        log_error "Plan failed with exit code $exit_code"
-        exit 1
-    fi
-    
-    log_success "Terraform plan completed"
-}
+# Plan deployment
+log_info "Planning deployment..."
+terraform plan -out=tfplan
 
-# Apply Terraform changes
-terraform_apply() {
-    log_info "Applying Terraform changes..."
-    cd "$INFRASTRUCTURE_DIR"
-    
-    local plan_file="tfplan"
-    if [[ ! -f "$plan_file" ]]; then
-        log_error "Plan file $plan_file not found. Run 'plan' first."
-        exit 1
-    fi
-    
-    # Confirmation
-    log_warning "You are about to apply changes to PRODUCTION infrastructure"
-    read -p "Are you sure? (yes/no): " confirm
-    if [[ "$confirm" != "yes" ]]; then
-        log_info "Apply cancelled"
-        exit 0
-    fi
-    
-    terraform apply "$plan_file"
-    
-    log_success "Terraform changes applied successfully"
-    log_info "Getting outputs..."
-    terraform output
-}
+# Ask for confirmation
+echo ""
+read -p "Do you want to apply this plan? (y/N): " -n 1 -r
+echo ""
 
-# Show Terraform outputs
-terraform_output() {
-    log_info "Showing Terraform outputs..."
-    cd "$INFRASTRUCTURE_DIR"
-    
-    if terraform output backend_url &>/dev/null; then
-        echo ""
-        echo "🔗 Service URLs:"
-        echo "Backend:  $(terraform output -raw backend_url)"
-        echo "Frontend: $(terraform output -raw frontend_url)"
-        echo ""
-        echo "🗄️ Database: job-assistant-db"
-        echo "🔧 Backend:  job-assistant-backend"
-        echo "🎨 Frontend: job-assistant-frontend"
-        echo "⚙️ Worker:   job-assistant-worker"
-        echo ""
-        echo "🔍 Monitor: https://dashboard.render.com"
-    else
-        log_warning "No outputs available. Infrastructure may not be deployed yet."
-    fi
-}
-
-# Destroy infrastructure
-terraform_destroy() {
-    log_error "⚠️  DESTRUCTIVE OPERATION ⚠️"
-    log_error "You are about to DESTROY all infrastructure"
-    log_error "This action cannot be undone!"
-    
-    echo ""
-    read -p "Type 'destroy production' to confirm: " confirm
-    if [[ "$confirm" != "destroy production" ]]; then
-        log_info "Destruction cancelled"
-        exit 0
-    fi
-    
-    cd "$INFRASTRUCTURE_DIR"
-    terraform destroy
-    
-    log_success "Infrastructure destroyed"
-}
-
-# Main function
-main() {
-    local command=${1:-""}
-    
-    if [[ -z "$command" ]]; then
-        show_help
-        exit 1
-    fi
-    
-    case "$command" in
-        "plan")
-            check_requirements
-            terraform_plan
-            ;;
-        "apply")
-            check_requirements
-            terraform_apply
-            ;;
-        "destroy")
-            check_requirements
-            terraform_destroy
-            ;;
-        "output")
-            terraform_output
-            ;;
-        "validate")
-            check_requirements
-            terraform_validate
-            ;;
-        "init")
-            check_requirements
-            terraform_init
-            ;;
-        "help"|"-h"|"--help")
-            show_help
-            ;;
-        *)
-            log_error "Unknown command: $command"
-            show_help
-            exit 1
-            ;;
-    esac
-}
-
-# Run main function
-main "$@" 
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  # Apply the plan
+  log_info "Applying Terraform plan..."
+  terraform apply tfplan
+  
+  # Clean up plan file
+  rm -f tfplan
+  
+  log_success "Deployment completed successfully!"
+  
+  # Show outputs
+  log_info "Deployment outputs:"
+  terraform output
+else
+  log_info "Deployment cancelled."
+  rm -f tfplan
+fi 
