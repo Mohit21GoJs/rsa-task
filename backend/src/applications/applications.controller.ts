@@ -90,7 +90,7 @@ export class ApplicationsController {
     headers: {
       'Content-Type': { description: 'text/event-stream' },
       'Cache-Control': { description: 'no-cache' },
-      'Connection': { description: 'keep-alive' },
+      Connection: { description: 'keep-alive' },
     },
   })
   notifications(): Observable<MessageEvent> {
@@ -284,7 +284,10 @@ export class ApplicationsController {
     description: 'Reminder triggered successfully',
   })
   @ApiResponse({ status: 404, description: 'Application not found' })
-  @ApiResponse({ status: 400, description: 'Cannot send reminder for this application' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot send reminder for this application',
+  })
   @HttpCode(HttpStatus.OK)
   triggerReminder(@Param('id') id: string): Promise<void> {
     return this.applicationsService.triggerManualReminder(id);

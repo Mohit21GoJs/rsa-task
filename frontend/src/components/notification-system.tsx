@@ -1,39 +1,42 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import { X, Bell, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
-import { applicationApi, NotificationEvent } from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect, useCallback } from 'react';
+import { X, Bell, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { applicationApi, NotificationEvent } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface Notification extends NotificationEvent {
-  id: string
-  read: boolean
+  id: string;
+  read: boolean;
 }
 
 interface NotificationSystemProps {
-  onNotificationReceived?: (notification: NotificationEvent) => void
+  onNotificationReceived?: (notification: NotificationEvent) => void;
 }
 
 export function NotificationSystem({ onNotificationReceived }: NotificationSystemProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [isConnected, setIsConnected] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  const addNotification = useCallback((event: NotificationEvent) => {
-    const notification: Notification = {
-      ...event,
-      id: `${event.applicationId}-${Date.now()}`,
-      read: false,
-    }
+  const addNotification = useCallback(
+    (event: NotificationEvent) => {
+      const notification: Notification = {
+        ...event,
+        id: `${event.applicationId}-${Date.now()}`,
+        read: false,
+      };
 
-    setNotifications(prev => [notification, ...prev.slice(0, 49)]) // Keep max 50 notifications
-    onNotificationReceived?.(event)
-  }, [onNotificationReceived])
+      setNotifications((prev) => [notification, ...prev.slice(0, 49)]); // Keep max 50 notifications
+      onNotificationReceived?.(event);
+    },
+    [onNotificationReceived],
+  );
 
   useEffect(() => {
-    let streamConnection: { close: () => void } | null = null
+    let streamConnection: { close: () => void } | null = null;
 
     const connectToSSE = () => {
       try {
@@ -41,97 +44,95 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
           // onMessage callback
           (event) => {
             try {
-              console.log('Received notification:', event)
-              const data: NotificationEvent = JSON.parse(event.data)
-              addNotification(data)
+              console.log('Received notification:', event);
+              const data: NotificationEvent = JSON.parse(event.data);
+              addNotification(data);
             } catch (error) {
-              console.error('Failed to parse notification:', error)
+              console.error('Failed to parse notification:', error);
             }
           },
           // onError callback
           (error) => {
-            console.error('SSE connection error:', error)
-            setIsConnected(false)
-            
+            console.error('SSE connection error:', error);
+            setIsConnected(false);
+
             // Attempt to reconnect after 5 seconds
             setTimeout(() => {
-              connectToSSE()
-            }, 5000)
+              connectToSSE();
+            }, 5000);
           },
           // onOpen callback
           () => {
-            console.log('📡 Connected to notification stream')
-            setIsConnected(true)
-          }
-        )
+            console.log('📡 Connected to notification stream');
+            setIsConnected(true);
+          },
+        );
       } catch (error) {
-        console.error('Failed to create SSE connection:', error)
-        setIsConnected(false)
+        console.error('Failed to create SSE connection:', error);
+        setIsConnected(false);
       }
-    }
+    };
 
-    connectToSSE()
+    connectToSSE();
 
     return () => {
       if (streamConnection) {
-        streamConnection.close()
+        streamConnection.close();
       }
-    }
-  }, [addNotification])
+    };
+  }, [addNotification]);
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, read: true }
-          : notification
-      )
-    )
-  }
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification,
+      ),
+    );
+  };
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    )
-  }
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
+  };
 
   const removeNotification = (id: string) => {
-    setNotifications(prev => 
-      prev.filter(notification => notification.id !== id)
-    )
-  }
+    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+  };
 
   const clearAllNotifications = () => {
-    setNotifications([])
-  }
+    setNotifications([]);
+  };
 
-  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'deadline_reminder':
-        return <Clock className="h-4 w-4 text-yellow-600" />
+        return <Clock className="h-4 w-4 text-yellow-600" />;
       case 'deadline_overdue':
-        return <AlertTriangle className="h-4 w-4 text-red-600" />
+        return <AlertTriangle className="h-4 w-4 text-red-600" />;
       case 'status_update':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'application_deleted':
+        return <X className="h-4 w-4 text-red-600" />;
       default:
-        return <Bell className="h-4 w-4 text-blue-600" />
+        return <Bell className="h-4 w-4 text-blue-600" />;
     }
-  }
+  };
 
   const getNotificationVariant = (type: string) => {
     switch (type) {
       case 'deadline_reminder':
-        return 'warning'
+        return 'warning';
       case 'deadline_overdue':
-        return 'destructive'
+        return 'destructive';
       case 'status_update':
-        return 'success'
+        return 'success';
+      case 'application_deleted':
+        return 'destructive';
       default:
-        return 'secondary'
+        return 'secondary';
     }
-  }
+  };
 
   return (
     <div className="relative">
@@ -147,8 +148,8 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
         )}
         {unreadCount > 0 && (
-          <Badge 
-            variant="destructive" 
+          <Badge
+            variant="destructive"
             className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -171,11 +172,7 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
                 <Button variant="ghost" size="sm" onClick={clearAllNotifications}>
                   Clear all
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setShowNotifications(false)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setShowNotifications(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -183,9 +180,7 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
 
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  No notifications yet
-                </div>
+                <div className="p-4 text-center text-gray-500">No notifications yet</div>
               ) : (
                 notifications.map((notification) => (
                   <div
@@ -206,9 +201,7 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
                             <div className="w-2 h-2 bg-blue-500 rounded-full" />
                           )}
                         </div>
-                        <p className="text-sm text-gray-900 mb-1">
-                          {notification.message}
-                        </p>
+                        <p className="text-sm text-gray-900 mb-1">{notification.message}</p>
                         <p className="text-xs text-gray-500">
                           {notification.company} - {notification.role}
                         </p>
@@ -220,8 +213,8 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
                         variant="ghost"
                         size="icon"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          removeNotification(notification.id)
+                          e.stopPropagation();
+                          removeNotification(notification.id);
                         }}
                       >
                         <X className="h-3 w-3" />
@@ -243,5 +236,5 @@ export function NotificationSystem({ onNotificationReceived }: NotificationSyste
         </Card>
       )}
     </div>
-  )
-} 
+  );
+}

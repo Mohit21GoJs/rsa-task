@@ -1,17 +1,17 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Check, Users, ArrowRight } from 'lucide-react'
-import { Application, ApplicationStatus } from '@/lib/types'
-import { applicationApi, BulkUpdateDto } from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState } from 'react';
+import { Check, Users, ArrowRight } from 'lucide-react';
+import { Application, ApplicationStatus } from '@/lib/types';
+import { applicationApi, BulkUpdateDto } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface BulkStatusUpdateProps {
-  applications: Application[]
-  onSuccess: () => void
-  onCancel: () => void
+  applications: Application[];
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
 const statusOptions = [
@@ -20,65 +20,64 @@ const statusOptions = [
   { status: ApplicationStatus.REJECTED, label: 'Rejected', variant: 'destructive' as const },
   { status: ApplicationStatus.WITHDRAWN, label: 'Withdrawn', variant: 'secondary' as const },
   { status: ApplicationStatus.ARCHIVED, label: 'Archived', variant: 'secondary' as const },
-]
+];
 
 export function BulkStatusUpdate({ applications, onSuccess, onCancel }: BulkStatusUpdateProps) {
-  const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set())
-  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null)
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set());
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleApplicationSelect = (applicationId: string) => {
-    setSelectedApplications(prev => {
-      const newSet = new Set(prev)
+    setSelectedApplications((prev) => {
+      const newSet = new Set(prev);
       if (newSet.has(applicationId)) {
-        newSet.delete(applicationId)
+        newSet.delete(applicationId);
       } else {
-        newSet.add(applicationId)
+        newSet.add(applicationId);
       }
-      return newSet
-    })
-  }
+      return newSet;
+    });
+  };
 
   const handleSelectAll = () => {
-    const eligibleApplications = applications.filter(app => 
-      app.status === ApplicationStatus.PENDING || 
-      app.status === ApplicationStatus.INTERVIEW
-    )
-    setSelectedApplications(new Set(eligibleApplications.map(app => app.id)))
-  }
+    const eligibleApplications = applications.filter(
+      (app) =>
+        app.status === ApplicationStatus.PENDING || app.status === ApplicationStatus.INTERVIEW,
+    );
+    setSelectedApplications(new Set(eligibleApplications.map((app) => app.id)));
+  };
 
   const handleDeselectAll = () => {
-    setSelectedApplications(new Set())
-  }
+    setSelectedApplications(new Set());
+  };
 
   const handleBulkUpdate = async () => {
-    if (!selectedStatus || selectedApplications.size === 0) return
+    if (!selectedStatus || selectedApplications.size === 0) return;
 
-    setIsUpdating(true)
+    setIsUpdating(true);
     try {
-      const updates = Array.from(selectedApplications).map(id => ({
+      const updates = Array.from(selectedApplications).map((id) => ({
         id,
         status: selectedStatus,
-      }))
+      }));
 
-      const bulkUpdateDto: BulkUpdateDto = { updates }
-      await applicationApi.bulkUpdate(bulkUpdateDto)
-      
-      onSuccess()
+      const bulkUpdateDto: BulkUpdateDto = { updates };
+      await applicationApi.bulkUpdate(bulkUpdateDto);
+
+      onSuccess();
     } catch (error) {
-      console.error('Error performing bulk update:', error)
-      alert('Error updating applications. Please try again.')
+      console.error('Error performing bulk update:', error);
+      alert('Error updating applications. Please try again.');
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
-  const eligibleApplications = applications.filter(app => 
-    app.status === ApplicationStatus.PENDING || 
-    app.status === ApplicationStatus.INTERVIEW
-  )
+  const eligibleApplications = applications.filter(
+    (app) => app.status === ApplicationStatus.PENDING || app.status === ApplicationStatus.INTERVIEW,
+  );
 
-  const selectedCount = selectedApplications.size
+  const selectedCount = selectedApplications.size;
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -122,11 +121,13 @@ export function BulkStatusUpdate({ applications, onSuccess, onCancel }: BulkStat
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                    selectedApplications.has(application.id)
-                      ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-300'
-                  }`}>
+                  <div
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                      selectedApplications.has(application.id)
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-300'
+                    }`}
+                  >
                     {selectedApplications.has(application.id) && (
                       <Check className="h-3 w-3 text-white" />
                     )}
@@ -136,7 +137,7 @@ export function BulkStatusUpdate({ applications, onSuccess, onCancel }: BulkStat
                     <p className="text-sm text-gray-600">{application.company}</p>
                   </div>
                 </div>
-                <Badge 
+                <Badge
                   variant={application.status === ApplicationStatus.PENDING ? 'pending' : 'warning'}
                 >
                   {application.status}
@@ -183,10 +184,9 @@ export function BulkStatusUpdate({ applications, onSuccess, onCancel }: BulkStat
             disabled={!selectedStatus || selectedCount === 0 || isUpdating}
             className="flex-1"
           >
-            {isUpdating 
-              ? 'Updating...' 
-              : `Update ${selectedCount} Application${selectedCount !== 1 ? 's' : ''}`
-            }
+            {isUpdating
+              ? 'Updating...'
+              : `Update ${selectedCount} Application${selectedCount !== 1 ? 's' : ''}`}
           </Button>
           <Button variant="outline" onClick={onCancel}>
             Cancel
@@ -197,12 +197,12 @@ export function BulkStatusUpdate({ applications, onSuccess, onCancel }: BulkStat
         {selectedCount > 0 && selectedStatus && (
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Preview:</strong> {selectedCount} application{selectedCount !== 1 ? 's' : ''} will be updated to{' '}
-              <Badge variant="secondary">{selectedStatus}</Badge>
+              <strong>Preview:</strong> {selectedCount} application{selectedCount !== 1 ? 's' : ''}{' '}
+              will be updated to <Badge variant="secondary">{selectedStatus}</Badge>
             </p>
           </div>
         )}
       </CardContent>
     </Card>
-  )
-} 
+  );
+}

@@ -235,8 +235,11 @@ describe('ApplicationsService', () => {
     it('should generate cover letter for application', async () => {
       // Given
       const mockCoverLetter = 'Generated cover letter content';
-      const updatedApplication = { ...mockApplication, coverLetter: mockCoverLetter };
-      
+      const updatedApplication = {
+        ...mockApplication,
+        coverLetter: mockCoverLetter,
+      };
+
       mockRepository.findOne.mockResolvedValue(mockApplication);
       mockLlmService.generateCoverLetter.mockResolvedValue(mockCoverLetter);
       mockRepository.save.mockResolvedValue(updatedApplication);
@@ -255,7 +258,7 @@ describe('ApplicationsService', () => {
         role: mockApplication.role,
       });
       expect(repository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ coverLetter: mockCoverLetter })
+        expect.objectContaining({ coverLetter: mockCoverLetter }),
       );
       expect(result).toEqual(updatedApplication);
     });
@@ -265,9 +268,9 @@ describe('ApplicationsService', () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       // When & Then
-      await expect(service.generateCoverLetter('non-existent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.generateCoverLetter('non-existent-id'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

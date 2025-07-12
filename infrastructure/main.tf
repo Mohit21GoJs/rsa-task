@@ -119,6 +119,45 @@ resource "render_web_service" "frontend" {
   num_instances = var.frontend_instances
 }
 
+# Background Worker Service
+resource "render_web_service" "worker" {
+  name   = "${local.app_name}-worker"
+  plan   = var.worker_plan
+  region = var.region
+
+  start_command = "cd backend && node dist/src/worker/temporal-worker.js"
+
+  # Runtime source configuration with GitHub authentication
+  runtime_source = {
+    native_runtime = {
+      auto_deploy   = var.auto_deploy_enabled
+      branch        = var.github_branch
+      build_command = "pnpm install --frozen-lockfile --prod=false && pnpm run build:backend"
+      repo_url      = "https://github.com/Mohit21GoJs/rsa-task"
+      runtime       = "node"
+
+      # GitHub authentication for private repository access
+      github_repo = var.github_access_token != "" ? {
+        access_token = var.github_access_token
+        } : var.github_app_id != "" ? {
+        app_id          = var.github_app_id
+        installation_id = var.github_app_installation_id
+        private_key     = var.github_app_private_key
+      } : null
+    }
+  }
+
+  # Resource limits
+  num_instances = var.worker_instances
+
+  # Disk configuration
+  disk = {
+    name       = "${local.app_name}-worker-disk"
+    size_gb    = 1
+    mount_path = "/data"
+  }
+}
+
 # PostgreSQL Database
 resource "render_postgres" "database" {
   name    = local.database_name
@@ -169,6 +208,17 @@ resource "render_env_group" "backend" {
     ENABLE_REQUEST_LOGGING = {
       value = "true"
     }
+    # External service configurations
+    TEMPORAL_ADDRESS = {
+      value = var.temporal_address
+    }
+    GEMINI_API_KEY = {
+      value = var.gemini_api_key
+    }
+    # Database configuration will be automatically set by Render
+    DATABASE_URL = {
+      value = render_postgres.database.database_url
+    }
   }
 }
 
@@ -199,6 +249,44 @@ resource "render_env_group" "frontend" {
   }
 }
 
+# Worker Environment Group
+resource "render_env_group" "worker" {
+  name = "${local.app_name}-worker-env"
+
+  env_vars = {
+    NODE_ENV = {
+      value = var.environment == "production" ? "production" : "staging"
+    }
+    TEMPORAL_NAMESPACE = {
+      value = var.temporal_namespace
+    }
+    # Application settings
+    GRACE_PERIOD_DAYS = {
+      value = tostring(var.grace_period_days)
+    }
+    DEFAULT_DEADLINE_WEEKS = {
+      value = tostring(var.default_deadline_weeks)
+    }
+    LOG_LEVEL = {
+      value = var.environment == "production" ? "info" : "debug"
+    }
+    ENABLE_REQUEST_LOGGING = {
+      value = "true"
+    }
+    # External service configurations
+    TEMPORAL_ADDRESS = {
+      value = var.temporal_address
+    }
+    GEMINI_API_KEY = {
+      value = var.gemini_api_key
+    }
+    # Database configuration will be automatically set by Render
+    DATABASE_URL = {
+      value = render_postgres.database.database_url
+    }
+  }
+}
+
 # Environment Group Links
 resource "render_env_group_link" "backend" {
   env_group_id = render_env_group.backend.id
@@ -208,4 +296,9 @@ resource "render_env_group_link" "backend" {
 resource "render_env_group_link" "frontend" {
   env_group_id = render_env_group.frontend.id
   service_ids  = [render_web_service.frontend.id]
+}
+
+resource "render_env_group_link" "worker" {
+  env_group_id = render_env_group.worker.id
+  service_ids  = [render_web_service.worker.id]
 } 

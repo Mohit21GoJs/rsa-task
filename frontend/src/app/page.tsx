@@ -1,87 +1,81 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Plus, RefreshCw, Bell } from 'lucide-react'
-import { Application, ApplicationStatus } from '@/lib/types'
-import { applicationApi, NotificationEvent } from '@/lib/api'
-import { ApplicationCard } from '@/components/application-card'
-import { ApplicationForm } from '@/components/application-form'
-import { BulkStatusUpdate } from '@/components/bulk-status-update'
-import { RemindersDashboard } from '@/components/reminders-dashboard'
-import { NotificationSystem } from '@/components/notification-system'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from 'react';
+import { Plus, RefreshCw, Bell } from 'lucide-react';
+import { Application, ApplicationStatus } from '@/lib/types';
+import { applicationApi, NotificationEvent } from '@/lib/api';
+import { ApplicationCard } from '@/components/application-card';
+import { ApplicationForm } from '@/components/application-form';
+import { BulkStatusUpdate } from '@/components/bulk-status-update';
+import { RemindersDashboard } from '@/components/reminders-dashboard';
+import { NotificationSystem } from '@/components/notification-system';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
-type ViewMode = 'dashboard' | 'form' | 'bulk-update' | 'reminders'
+type ViewMode = 'dashboard' | 'form' | 'bulk-update' | 'reminders';
 
 export default function HomePage() {
-  const [applications, setApplications] = useState<Application[]>([])
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([])
-  const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<ViewMode>('dashboard')
-  const [editingApplication, setEditingApplication] = useState<Application | null>(null)
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'all'>('all')
-  const [lastNotification, setLastNotification] = useState<NotificationEvent | null>(null)
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+  const [editingApplication, setEditingApplication] = useState<Application | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'all'>('all');
+  const [lastNotification, setLastNotification] = useState<NotificationEvent | null>(null);
 
   const fetchApplications = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await applicationApi.getAll()
-      setApplications(data)
-      setFilteredApplications(data)
+      const data = await applicationApi.getAll();
+      setApplications(data);
+      setFilteredApplications(data);
     } catch (error) {
-      console.error('Error fetching applications:', error)
+      console.error('Error fetching applications:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchApplications()
-  }, [])
+    fetchApplications();
+  }, []);
 
   useEffect(() => {
     if (statusFilter === 'all') {
-      setFilteredApplications(applications)
+      setFilteredApplications(applications);
     } else {
-      setFilteredApplications(
-        applications.filter(app => app.status === statusFilter)
-      )
+      setFilteredApplications(applications.filter((app) => app.status === statusFilter));
     }
-  }, [applications, statusFilter])
+  }, [applications, statusFilter]);
 
   const handleFormSuccess = () => {
-    setViewMode('dashboard')
-    setEditingApplication(null)
-    fetchApplications()
-  }
+    setViewMode('dashboard');
+    setEditingApplication(null);
+    fetchApplications();
+  };
 
   const handleFormCancel = () => {
-    setViewMode('dashboard')
-    setEditingApplication(null)
-  }
+    setViewMode('dashboard');
+    setEditingApplication(null);
+  };
 
   const handleEdit = (application: Application) => {
-    setEditingApplication(application)
-    setViewMode('form')
-  }
+    setEditingApplication(application);
+    setViewMode('form');
+  };
 
   const handleApplicationUpdate = (id: string, status: ApplicationStatus) => {
-    setApplications(prev =>
-      prev.map(app =>
-        app.id === id ? { ...app, status } : app
-      )
-    )
-  }
+    setApplications((prev) => prev.map((app) => (app.id === id ? { ...app, status } : app)));
+  };
 
   const handleNotificationReceived = (notification: NotificationEvent) => {
-    setLastNotification(notification)
-    
-    // Auto-refresh applications when status updates are received
-    if (notification.type === 'status_update') {
-      setTimeout(fetchApplications, 1000)
+    setLastNotification(notification);
+
+    // Auto-refresh applications when status updates or deletions are received
+    if (notification.type === 'status_update' || notification.type === 'application_deleted') {
+      setTimeout(fetchApplications, 500);
     }
-  }
+  };
 
   const getStatusCounts = () => {
     const counts = {
@@ -92,35 +86,16 @@ export default function HomePage() {
       [ApplicationStatus.REJECTED]: 0,
       [ApplicationStatus.WITHDRAWN]: 0,
       [ApplicationStatus.ARCHIVED]: 0,
-    }
+    };
 
-    applications.forEach(app => {
-      counts[app.status]++
-    })
+    applications.forEach((app) => {
+      counts[app.status]++;
+    });
 
-    return counts
-  }
+    return counts;
+  };
 
-  const getUrgentCounts = () => {
-    const now = new Date()
-    const overdue = applications.filter(app => 
-      app.status === ApplicationStatus.PENDING && 
-      new Date(app.deadline) < now
-    ).length
-
-    const upcoming = applications.filter(app => {
-      if (app.status !== ApplicationStatus.PENDING) return false
-      const deadline = new Date(app.deadline)
-      const threeDaysFromNow = new Date()
-      threeDaysFromNow.setDate(now.getDate() + 3)
-      return deadline <= threeDaysFromNow && deadline >= now
-    }).length
-
-    return { overdue, upcoming }
-  }
-
-  const statusCounts = getStatusCounts()
-  const urgentCounts = getUrgentCounts()
+  const statusCounts = getStatusCounts();
 
   // Dashboard view
   if (viewMode === 'dashboard') {
@@ -132,18 +107,12 @@ export default function HomePage() {
             <h2 className="text-xl font-semibold text-gray-900">
               Your Applications ({applications.length})
             </h2>
-            <p className="text-gray-600">
-              Track and manage your job applications
-            </p>
+            <p className="text-gray-600">Track and manage your job applications</p>
           </div>
-          
+
           <div className="flex gap-2 items-center">
             <NotificationSystem onNotificationReceived={handleNotificationReceived} />
-            <Button
-              variant="outline"
-              onClick={fetchApplications}
-              disabled={loading}
-            >
+            <Button variant="outline" onClick={fetchApplications} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
@@ -164,7 +133,7 @@ export default function HomePage() {
             <Plus className="h-6 w-6" />
             <span>Add New Application</span>
           </Button>
-          
+
           <Button
             variant="outline"
             onClick={() => setViewMode('bulk-update')}
@@ -173,7 +142,7 @@ export default function HomePage() {
             <RefreshCw className="h-6 w-6" />
             <span>Bulk Update Status</span>
           </Button>
-          
+
           <Button
             variant="outline"
             onClick={fetchApplications}
@@ -196,7 +165,7 @@ export default function HomePage() {
             All
             <Badge variant="secondary">{statusCounts.all}</Badge>
           </Button>
-          
+
           {Object.values(ApplicationStatus).map((status) => (
             <Button
               key={status}
@@ -221,8 +190,7 @@ export default function HomePage() {
             <div className="text-gray-500 mb-4">
               {statusFilter === 'all'
                 ? "No applications yet. Click 'Add Application' to get started!"
-                : `No applications with status: ${statusFilter}`
-              }
+                : `No applications with status: ${statusFilter}`}
             </div>
             {statusFilter === 'all' && (
               <Button onClick={() => setViewMode('form')}>
@@ -256,11 +224,7 @@ export default function HomePage() {
                     {lastNotification.company} - {lastNotification.role}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setLastNotification(null)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setLastNotification(null)}>
                   ×
                 </Button>
               </div>
@@ -268,7 +232,7 @@ export default function HomePage() {
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Form view
@@ -281,7 +245,7 @@ export default function HomePage() {
           onCancel={handleFormCancel}
         />
       </div>
-    )
+    );
   }
 
   // Bulk update view
@@ -291,13 +255,13 @@ export default function HomePage() {
         <BulkStatusUpdate
           applications={applications}
           onSuccess={() => {
-            setViewMode('dashboard')
-            fetchApplications()
+            setViewMode('dashboard');
+            fetchApplications();
           }}
           onCancel={() => setViewMode('dashboard')}
         />
       </div>
-    )
+    );
   }
 
   // Reminders view
@@ -310,15 +274,15 @@ export default function HomePage() {
           </Button>
           <h2 className="text-xl font-semibold">Reminders & Deadlines</h2>
         </div>
-        
+
         <RemindersDashboard
           applications={applications}
           onUpdateApplication={handleApplicationUpdate}
           onRefresh={fetchApplications}
         />
       </div>
-    )
+    );
   }
 
-  return null
+  return null;
 }

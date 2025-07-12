@@ -1,35 +1,35 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Pencil, Trash2, Calendar, Building2, FileText } from 'lucide-react'
-import { Application, ApplicationStatus } from '@/lib/types'
-import { formatDate, isOverdue, daysUntilDeadline } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { applicationApi } from '@/lib/api'
-import { CoverLetterModal } from './cover-letter-modal'
+import { useState } from 'react';
+import { Pencil, Trash2, Calendar, Building2, FileText } from 'lucide-react';
+import { Application, ApplicationStatus } from '@/lib/types';
+import { formatDate, isOverdue, daysUntilDeadline } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { applicationApi } from '@/lib/api';
+import { CoverLetterModal } from './cover-letter-modal';
 
 interface ApplicationCardProps {
-  application: Application
-  onUpdate: () => void
-  onEdit: (application: Application) => void
+  application: Application;
+  onUpdate: () => void;
+  onEdit: (application: Application) => void;
 }
 
 export function ApplicationCard({ application, onUpdate, onEdit }: ApplicationCardProps) {
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
 
-  const overdue = isOverdue(application.deadline)
-  const daysLeft = daysUntilDeadline(application.deadline)
+  const overdue = isOverdue(application.deadline);
+  const daysLeft = daysUntilDeadline(application.deadline);
 
   const statusActions = [
     { status: ApplicationStatus.INTERVIEW, label: 'Interview' },
     { status: ApplicationStatus.OFFER, label: 'Offer' },
     { status: ApplicationStatus.REJECTED, label: 'Rejected' },
     { status: ApplicationStatus.WITHDRAWN, label: 'Withdrawn' },
-  ]
+  ];
 
   const statusVariants = {
     [ApplicationStatus.PENDING]: 'secondary' as const,
@@ -38,33 +38,33 @@ export function ApplicationCard({ application, onUpdate, onEdit }: ApplicationCa
     [ApplicationStatus.REJECTED]: 'destructive' as const,
     [ApplicationStatus.WITHDRAWN]: 'outline' as const,
     [ApplicationStatus.ARCHIVED]: 'outline' as const,
-  }
+  };
 
   const handleStatusUpdate = async (newStatus: ApplicationStatus) => {
-    setIsUpdating(true)
+    setIsUpdating(true);
     try {
-      await applicationApi.update(application.id, { status: newStatus })
-      onUpdate()
+      await applicationApi.update(application.id, { status: newStatus });
+      onUpdate();
     } catch (error) {
-      console.error('Error updating application status:', error)
+      console.error('Error updating application status:', error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this application?')) {
-      setIsDeleting(true)
+      setIsDeleting(true);
       try {
-        await applicationApi.delete(application.id)
-        onUpdate()
+        await applicationApi.delete(application.id);
+        onUpdate();
       } catch (error) {
-        console.error('Error deleting application:', error)
+        console.error('Error deleting application:', error);
       } finally {
-        setIsDeleting(false)
+        setIsDeleting(false);
       }
     }
-  }
+  };
 
   return (
     <>
@@ -78,9 +78,7 @@ export function ApplicationCard({ application, onUpdate, onEdit }: ApplicationCa
                 {application.company}
               </div>
             </div>
-            <Badge variant={statusVariants[application.status]}>
-              {application.status}
-            </Badge>
+            <Badge variant={statusVariants[application.status]}>{application.status}</Badge>
           </div>
         </CardHeader>
 
@@ -94,9 +92,7 @@ export function ApplicationCard({ application, onUpdate, onEdit }: ApplicationCa
             </span>
           </div>
 
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {application.jobDescription}
-          </p>
+          <p className="text-sm text-gray-600 line-clamp-2">{application.jobDescription}</p>
 
           {application.notes && (
             <div className="p-2 bg-gray-50 rounded text-sm">
@@ -118,11 +114,7 @@ export function ApplicationCard({ application, onUpdate, onEdit }: ApplicationCa
                 <span>Generate Cover Letter</span>
               )}
             </Button>
-            {application.coverLetter && (
-              <div className="text-xs text-green-600">
-                ✓ Generated
-              </div>
-            )}
+            {application.coverLetter && <div className="text-xs text-green-600">✓ Generated</div>}
           </div>
         </CardContent>
 
@@ -144,19 +136,10 @@ export function ApplicationCard({ application, onUpdate, onEdit }: ApplicationCa
           )}
 
           <div className="flex gap-2 ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(application)}
-            >
+            <Button variant="outline" size="sm" onClick={() => onEdit(application)}>
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
+            <Button variant="outline" size="sm" onClick={handleDelete} disabled={isDeleting}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -170,5 +153,5 @@ export function ApplicationCard({ application, onUpdate, onEdit }: ApplicationCa
         onUpdate={onUpdate}
       />
     </>
-  )
-} 
+  );
+}

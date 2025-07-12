@@ -30,7 +30,9 @@ export class LlmService {
         return this.generateMockCoverLetter(request);
       }
 
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = this.genAI.getGenerativeModel({
+        model: 'gemini-2.0-flash',
+      });
 
       const prompt = this.buildCoverLetterPrompt(request);
 
@@ -104,7 +106,9 @@ Note: This is a mock cover letter. Please configure GEMINI_API_KEY for AI-genera
         return `${originalLetter}\n\n[Improvement suggestions: ${feedback}]`;
       }
 
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = this.genAI.getGenerativeModel({
+        model: 'gemini-2.0-flash',
+      });
 
       const prompt = `
 Please improve the following cover letter based on this feedback: "${feedback}"

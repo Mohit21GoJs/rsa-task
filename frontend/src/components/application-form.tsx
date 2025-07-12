@@ -1,72 +1,70 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Application, CreateApplicationDto } from '@/lib/types'
-import { applicationApi } from '@/lib/api'
-import { addWeeks, format } from 'date-fns'
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Application, CreateApplicationDto } from '@/lib/types';
+import { applicationApi } from '@/lib/api';
+import { addWeeks, format } from 'date-fns';
 
 interface ApplicationFormProps {
-  application?: Application
-  onSuccess: () => void
-  onCancel: () => void
+  application?: Application;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
 export function ApplicationForm({ application, onSuccess, onCancel }: ApplicationFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     company: application?.company || '',
     role: application?.role || '',
     jobDescription: application?.jobDescription || '',
     resume: application?.resume || '',
-    deadline: application?.deadline 
+    deadline: application?.deadline
       ? format(new Date(application.deadline), 'yyyy-MM-dd')
       : format(addWeeks(new Date(), 4), 'yyyy-MM-dd'),
     notes: application?.notes || '',
-  })
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       const submitData: CreateApplicationDto = {
         ...formData,
         deadline: new Date(formData.deadline).toISOString(),
-      }
+      };
 
       if (application) {
         // Update existing application
         await applicationApi.update(application.id, {
           notes: formData.notes,
-        })
+        });
       } else {
         // Create new application
-        await applicationApi.create(submitData)
+        await applicationApi.create(submitData);
       }
 
-      onSuccess()
+      onSuccess();
     } catch (error) {
-      console.error('Error submitting application:', error)
-      alert('Error submitting application. Please try again.')
+      console.error('Error submitting application:', error);
+      alert('Error submitting application. Please try again.');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>
-          {application ? 'Edit Application' : 'Add New Job Application'}
-        </CardTitle>
+        <CardTitle>{application ? 'Edit Application' : 'Add New Job Application'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -167,5 +165,5 @@ export function ApplicationForm({ application, onSuccess, onCancel }: Applicatio
         </form>
       </CardContent>
     </Card>
-  )
-} 
+  );
+}

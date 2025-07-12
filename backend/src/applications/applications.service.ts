@@ -114,10 +114,18 @@ export class ApplicationsService implements OnModuleDestroy {
           await this.applicationRepository.save(application);
 
         // Signal workflow about status change
-        await this.workflowService.signalStatusUpdate(
-          application.workflowId,
-          update.status,
-        );
+        try {
+          await this.workflowService.signalStatusUpdate(
+            application.workflowId,
+            update.status,
+          );
+        } catch (error) {
+          // Log but don't fail the bulk update if workflow signaling fails
+          console.error(
+            `Failed to signal status update to workflow ${application.workflowId}:`,
+            error,
+          );
+        }
 
         updatedApplications.push(updatedApplication);
 
@@ -144,7 +152,7 @@ export class ApplicationsService implements OnModuleDestroy {
 
     // Create a new Subject for this connection
     const subject = new Subject<MessageEvent>();
-    
+
     // Store the connection
     const connection: SSEConnection = {
       id: connectionId,
@@ -152,7 +160,7 @@ export class ApplicationsService implements OnModuleDestroy {
       connectedAt: new Date(),
       isActive: true,
     };
-    
+
     this.connections.set(connectionId, connection);
     console.log(`📊 Total active connections: ${this.connections.size}`);
 
@@ -163,7 +171,10 @@ export class ApplicationsService implements OnModuleDestroy {
           try {
             observer.next(event);
           } catch (error) {
-            console.error(`❌ Error sending to connection ${connectionId}:`, error);
+            console.error(
+              `❌ Error sending to connection ${connectionId}:`,
+              error,
+            );
             // Mark connection as inactive if there's an error
             connection.isActive = false;
             this.cleanupConnection(connectionId);
@@ -220,10 +231,18 @@ export class ApplicationsService implements OnModuleDestroy {
 
     // Signal workflow about status change
     if (updateApplicationDto.status) {
-      await this.workflowService.signalStatusUpdate(
-        application.workflowId,
-        updateApplicationDto.status,
-      );
+      try {
+        await this.workflowService.signalStatusUpdate(
+          application.workflowId,
+          updateApplicationDto.status,
+        );
+      } catch (error) {
+        // Log but don't fail the update if workflow signaling fails
+        console.error(
+          `Failed to signal status update to workflow ${application.workflowId}:`,
+          error,
+        );
+      }
 
       // Send real-time notification for status changes
       if (oldStatus !== updateApplicationDto.status) {
@@ -240,10 +259,18 @@ export class ApplicationsService implements OnModuleDestroy {
 
     // Signal workflow about notes update
     if (updateApplicationDto.notes) {
-      await this.workflowService.signalNotesUpdate(
-        application.workflowId,
-        updateApplicationDto.notes,
-      );
+      try {
+        await this.workflowService.signalNotesUpdate(
+          application.workflowId,
+          updateApplicationDto.notes,
+        );
+      } catch (error) {
+        // Log but don't fail the update if workflow signaling fails
+        console.error(
+          `Failed to signal notes update to workflow ${application.workflowId}:`,
+          error,
+        );
+      }
     }
 
     return updatedApplication;
@@ -252,8 +279,17 @@ export class ApplicationsService implements OnModuleDestroy {
   async remove(id: string): Promise<void> {
     const application = await this.findOne(id);
 
-    // Cancel workflow
-    await this.workflowService.cancelWorkflow(application.workflowId);
+    try {
+      // Cancel workflow - this will handle WorkflowNotFoundError internally
+      await this.workflowService.cancelWorkflow(application.workflowId);
+    } catch (error) {
+      // Log but don't fail the deletion if workflow cancellation fails
+      console.error(
+        `Failed to cancel workflow ${application.workflowId} during deletion:`,
+        error,
+      );
+      // Continue with database deletion
+    }
 
     // Remove from database
     await this.applicationRepository.remove(application);
@@ -340,7 +376,7 @@ export class ApplicationsService implements OnModuleDestroy {
     message: string;
   }): void {
     console.log('📤 Sending notification to SSE clients:', notification);
-    
+
     const notificationWithTimestamp = {
       ...notification,
       timestamp: new Date().toISOString(),
@@ -412,7 +448,9 @@ export class ApplicationsService implements OnModuleDestroy {
     try {
       const now = new Date();
       const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      const threeDaysFromNow = new Date(
+        now.getTime() + 3 * 24 * 60 * 60 * 1000,
+      );
 
       // Find applications with deadlines within 1 day that are still pending
       const urgentApplications = await this.applicationRepository.find({
@@ -457,7 +495,10 @@ export class ApplicationsService implements OnModuleDestroy {
         total: approachingApplications.length,
       };
     } catch (error) {
-      console.error('Error monitoring deadline approaching applications:', error);
+      console.error(
+        'Error monitoring deadline approaching applications:',
+        error,
+      );
       throw error;
     }
   }
@@ -469,7 +510,9 @@ export class ApplicationsService implements OnModuleDestroy {
     hoursThreshold: number = 24,
   ): Promise<Application[]> {
     try {
-      const thresholdDate = new Date(Date.now() + hoursThreshold * 60 * 60 * 1000);
+      const thresholdDate = new Date(
+        Date.now() + hoursThreshold * 60 * 60 * 1000,
+      );
 
       return await this.applicationRepository.find({
         where: {
@@ -490,24 +533,22 @@ export class ApplicationsService implements OnModuleDestroy {
   async triggerManualReminder(applicationId: string): Promise<void> {
     try {
       const application = await this.findOne(applicationId);
-      
+
       if (application.status !== ApplicationStatus.PENDING) {
-        throw new BadRequestException('Cannot send reminders for non-pending applications');
+        throw new BadRequestException(
+          'Cannot send reminders for non-pending applications',
+        );
       }
 
       const now = new Date();
       const timeRemaining = application.deadline.getTime() - now.getTime();
-      
+
       if (timeRemaining <= 0) {
         throw new BadRequestException('Cannot send reminder for past deadline');
       }
 
       const hoursRemaining = Math.ceil(timeRemaining / (60 * 60 * 1000));
       const daysRemaining = Math.ceil(timeRemaining / (24 * 60 * 60 * 1000));
-
-      let urgencyLevel = 'normal';
-      if (hoursRemaining <= 24) urgencyLevel = 'urgent';
-      else if (daysRemaining <= 3) urgencyLevel = 'high';
 
       this.sendNotification({
         type: 'manual_reminder',
@@ -520,7 +561,10 @@ export class ApplicationsService implements OnModuleDestroy {
 
       console.log(`Manual reminder triggered for application ${applicationId}`);
     } catch (error) {
-      console.error(`Error triggering manual reminder for application ${applicationId}:`, error);
+      console.error(
+        `Error triggering manual reminder for application ${applicationId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -528,16 +572,21 @@ export class ApplicationsService implements OnModuleDestroy {
   // Enhanced connection management methods
   private broadcastToConnections(messageEvent: MessageEvent): void {
     const activeConnections = Array.from(this.connections.values()).filter(
-      (conn) => conn.isActive
+      (conn) => conn.isActive,
     );
 
-    console.log(`📡 Broadcasting to ${activeConnections.length} active connections`);
+    console.log(
+      `📡 Broadcasting to ${activeConnections.length} active connections`,
+    );
 
     activeConnections.forEach((connection) => {
       try {
         connection.subject.next(messageEvent);
       } catch (error) {
-        console.error(`❌ Error broadcasting to connection ${connection.id}:`, error);
+        console.error(
+          `❌ Error broadcasting to connection ${connection.id}:`,
+          error,
+        );
         // Mark connection as inactive and clean it up
         connection.isActive = false;
         this.cleanupConnection(connection.id);
@@ -575,7 +624,9 @@ export class ApplicationsService implements OnModuleDestroy {
       }
 
       if (connectionsToCleanup.length > 0) {
-        console.log(`🧹 Cleaning up ${connectionsToCleanup.length} inactive connections`);
+        console.log(
+          `🧹 Cleaning up ${connectionsToCleanup.length} inactive connections`,
+        );
         connectionsToCleanup.forEach((id) => this.cleanupConnection(id));
       }
     }, 30000); // Run every 30 seconds
@@ -607,7 +658,7 @@ export class ApplicationsService implements OnModuleDestroy {
   // Cleanup method for service shutdown
   onModuleDestroy(): void {
     console.log('🔄 Shutting down ApplicationsService...');
-    
+
     // Stop connection cleanup interval
     if (this.connectionCleanupInterval) {
       clearInterval(this.connectionCleanupInterval);

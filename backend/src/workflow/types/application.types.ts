@@ -15,4 +15,4 @@ export interface JobApplicationWorkflowInput {
   resume: string;
   deadline: Date;
   gracePeriodDays: number;
-} 
+}

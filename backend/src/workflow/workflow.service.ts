@@ -1,6 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client, Connection, WorkflowHandle } from '@temporalio/client';
+import {
+  Client,
+  Connection,
+  WorkflowHandle,
+  WorkflowNotFoundError,
+} from '@temporalio/client';
 import { Application } from '../applications/entities/application.entity';
 import { ApplicationStatus } from './types/application.types';
 import {
@@ -88,6 +93,13 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
         `📡 Sent status update signal to workflow ${workflowId}: ${status}`,
       );
     } catch (error) {
+      if (error instanceof WorkflowNotFoundError) {
+        console.warn(
+          `⚠️  Workflow ${workflowId} not found - cannot send status update signal`,
+        );
+        return;
+      }
+
       console.error('Failed to send status update signal:', error);
       throw error;
     }
@@ -100,6 +112,13 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
 
       console.log(`📡 Sent notes update signal to workflow ${workflowId}`);
     } catch (error) {
+      if (error instanceof WorkflowNotFoundError) {
+        console.warn(
+          `⚠️  Workflow ${workflowId} not found - cannot send notes update signal`,
+        );
+        return;
+      }
+
       console.error('Failed to send notes update signal:', error);
       throw error;
     }
@@ -112,6 +131,14 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
 
       console.log(`🛑 Cancelled workflow ${workflowId}`);
     } catch (error) {
+      if (error instanceof WorkflowNotFoundError) {
+        console.warn(
+          `⚠️  Workflow ${workflowId} not found - may have already been cancelled or completed`,
+        );
+        // Don't throw error for non-existent workflows as it's not a failure condition
+        return;
+      }
+
       console.error('Failed to cancel workflow:', error);
       throw error;
     }
@@ -124,6 +151,13 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
 
       return result;
     } catch (error) {
+      if (error instanceof WorkflowNotFoundError) {
+        console.warn(
+          `⚠️  Workflow ${workflowId} not found - cannot get status`,
+        );
+        return null;
+      }
+
       console.error('Failed to get workflow status:', error);
       throw error;
     }
@@ -134,6 +168,11 @@ export class WorkflowService implements OnModuleInit, OnModuleDestroy {
       const handle = this.client.workflow.getHandle(workflowId);
       return await handle.describe();
     } catch (error) {
+      if (error instanceof WorkflowNotFoundError) {
+        console.warn(`⚠️  Workflow ${workflowId} not found - cannot describe`);
+        return null;
+      }
+
       console.error('Failed to describe workflow:', error);
       throw error;
     }

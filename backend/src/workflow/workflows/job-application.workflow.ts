@@ -8,7 +8,10 @@ import {
   CancellationScope,
   isCancellation,
 } from '@temporalio/workflow';
-import { ApplicationStatus, JobApplicationWorkflowInput } from '../types/application.types';
+import {
+  ApplicationStatus,
+  JobApplicationWorkflowInput,
+} from '../types/application.types';
 
 import type * as activities from '../activities/application.activities';
 
@@ -49,7 +52,7 @@ export async function jobApplicationWorkflow(
   setHandler(statusUpdateSignal, (newStatus: ApplicationStatus) => {
     const previousStatus = currentStatus;
     currentStatus = newStatus;
-    
+
     if (
       newStatus === ApplicationStatus.REJECTED ||
       newStatus === ApplicationStatus.WITHDRAWN ||
@@ -62,8 +65,10 @@ export async function jobApplicationWorkflow(
         reminderCancelScope = null;
       }
     }
-    
-    console.log(`Status updated from ${previousStatus} to ${newStatus} for application ${input.applicationId}`);
+
+    console.log(
+      `Status updated from ${previousStatus} to ${newStatus} for application ${input.applicationId}`,
+    );
   });
 
   setHandler(notesUpdateSignal, async (notes: string) => {
@@ -108,18 +113,27 @@ export async function jobApplicationWorkflow(
     if (timeToDeadline > 0) {
       // Check if deadline is within 1 day
       if (timeToDeadline <= oneDayInMs) {
-        console.log(`Deadline is within 1 day for application ${input.applicationId}, starting immediate reminders`);
-        
+        console.log(
+          `Deadline is within 1 day for application ${input.applicationId}, starting immediate reminders`,
+        );
+
         // Start immediate reminder loop since deadline is within 1 day
         reminderCancelScope = new CancellationScope();
         await reminderCancelScope.run(async () => {
-          await startReminderLoop(input, oneMinuteInMs, currentStatus, workflowCompleted);
+          await startReminderLoop(
+            input,
+            oneMinuteInMs,
+            currentStatus,
+            workflowCompleted,
+          );
         });
       } else {
         // Sleep until 1 day before deadline
         const timeUntilReminderStart = timeToDeadline - oneDayInMs;
-        console.log(`Sleeping ${timeUntilReminderStart}ms until reminder period starts for application ${input.applicationId}`);
-        
+        console.log(
+          `Sleeping ${timeUntilReminderStart}ms until reminder period starts for application ${input.applicationId}`,
+        );
+
         await Promise.race([
           sleep(timeUntilReminderStart),
           new Promise<void>((resolve) => {
@@ -136,18 +150,27 @@ export async function jobApplicationWorkflow(
 
         // If workflow is not completed and we're now within 1 day of deadline, start reminders
         if (!workflowCompleted && currentStatus === ApplicationStatus.PENDING) {
-          console.log(`Starting reminder period for application ${input.applicationId}`);
-          
+          console.log(
+            `Starting reminder period for application ${input.applicationId}`,
+          );
+
           reminderCancelScope = new CancellationScope();
           try {
             await reminderCancelScope.run(async () => {
-              await startReminderLoop(input, oneMinuteInMs, currentStatus, workflowCompleted);
+              await startReminderLoop(
+                input,
+                oneMinuteInMs,
+                currentStatus,
+                workflowCompleted,
+              );
             });
           } catch (error) {
             if (!isCancellation(error)) {
               throw error;
             }
-            console.log(`Reminder loop cancelled for application ${input.applicationId}`);
+            console.log(
+              `Reminder loop cancelled for application ${input.applicationId}`,
+            );
           }
         }
       }
@@ -157,7 +180,7 @@ export async function jobApplicationWorkflow(
     if (!workflowCompleted && currentStatus === ApplicationStatus.PENDING) {
       const now = Date.now();
       const deadlineReached = now >= deadlineTime;
-      
+
       if (deadlineReached) {
         // Send final deadline notification
         await sendNotification({
@@ -168,8 +191,10 @@ export async function jobApplicationWorkflow(
 
         // Wait for grace period
         const gracePeriodMs = input.gracePeriodDays * 24 * 60 * 60 * 1000;
-        console.log(`Starting grace period of ${input.gracePeriodDays} days for application ${input.applicationId}`);
-        
+        console.log(
+          `Starting grace period of ${input.gracePeriodDays} days for application ${input.applicationId}`,
+        );
+
         await Promise.race([
           sleep(gracePeriodMs),
           new Promise<void>((resolve) => {
@@ -230,45 +255,51 @@ async function startReminderLoop(
 ): Promise<void> {
   const deadlineTime = new Date(input.deadline).getTime();
   let reminderCount = 0;
-  
+
   while (!workflowCompleted && currentStatus === ApplicationStatus.PENDING) {
     const now = Date.now();
     const timeRemaining = deadlineTime - now;
-    
+
     // Stop if deadline has passed
     if (timeRemaining <= 0) {
-      console.log(`Deadline reached, stopping reminders for application ${input.applicationId}`);
+      console.log(
+        `Deadline reached, stopping reminders for application ${input.applicationId}`,
+      );
       break;
     }
-    
+
     reminderCount++;
     const hoursRemaining = Math.ceil(timeRemaining / (60 * 60 * 1000));
     const minutesRemaining = Math.ceil(timeRemaining / (60 * 1000));
-    
+
     let timeMessage = '';
     if (hoursRemaining > 1) {
       timeMessage = `${hoursRemaining} hours remaining`;
     } else {
       timeMessage = `${minutesRemaining} minutes remaining`;
     }
-    
+
     // Send reminder notification
     await sendNotification({
       applicationId: input.applicationId,
       message: `⚠️ URGENT REMINDER #${reminderCount}: Application deadline for ${input.company} - ${input.role} is approaching! ${timeMessage}. Please update your application status.`,
       type: 'urgent_reminder',
     });
-    
-    console.log(`Sent reminder #${reminderCount} for application ${input.applicationId}, ${timeMessage}`);
-    
+
+    console.log(
+      `Sent reminder #${reminderCount} for application ${input.applicationId}, ${timeMessage}`,
+    );
+
     // Sleep for the specified interval (default 1 minute)
     await sleep(intervalMs);
-    
+
     // Re-check status in case it was updated during the sleep
     // Note: In Temporal, we rely on signals to update the status,
     // but we also check here to be safe
     if (workflowCompleted || currentStatus !== ApplicationStatus.PENDING) {
-      console.log(`Status changed or workflow completed, stopping reminders for application ${input.applicationId}`);
+      console.log(
+        `Status changed or workflow completed, stopping reminders for application ${input.applicationId}`,
+      );
       break;
     }
   }

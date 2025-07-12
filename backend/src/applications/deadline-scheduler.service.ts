@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { ApplicationsService } from './applications.service';
 
 @Injectable()
@@ -18,20 +18,21 @@ export class DeadlineSchedulerService {
   })
   async monitorDeadlinesHourly() {
     this.logger.log('Running hourly deadline monitoring...');
-    
+
     try {
-      const results = await this.applicationsService.monitorDeadlineApproachingApplications();
-      
+      const results =
+        await this.applicationsService.monitorDeadlineApproachingApplications();
+
       this.logger.log(
-        `Deadline monitoring completed: ${results.urgent.length} urgent, ${results.approaching.length} approaching deadlines`
+        `Deadline monitoring completed: ${results.urgent.length} urgent, ${results.approaching.length} approaching deadlines`,
       );
 
       // Log details about urgent applications
       if (results.urgent.length > 0) {
         this.logger.warn(
           `URGENT: ${results.urgent.length} application(s) have deadlines within 24 hours: ${results.urgent
-            .map(app => `${app.company} - ${app.role}`)
-            .join(', ')}`
+            .map((app) => `${app.company} - ${app.role}`)
+            .join(', ')}`,
         );
       }
     } catch (error) {
@@ -50,24 +51,29 @@ export class DeadlineSchedulerService {
   async intensiveDeadlineMonitoring() {
     try {
       // Get applications requiring immediate attention (within 6 hours)
-      const urgentApps = await this.applicationsService.getApplicationsRequiringAttention(6);
-      
+      const urgentApps =
+        await this.applicationsService.getApplicationsRequiringAttention(6);
+
       if (urgentApps.length > 0) {
         this.logger.warn(
-          `⚠️ CRITICAL: ${urgentApps.length} application(s) with deadlines within 6 hours`
+          `⚠️ CRITICAL: ${urgentApps.length} application(s) with deadlines within 6 hours`,
         );
-        
+
         // For very urgent applications (within 2 hours), trigger manual reminders
-        const criticalApps = await this.applicationsService.getApplicationsRequiringAttention(2);
-        
+        const criticalApps =
+          await this.applicationsService.getApplicationsRequiringAttention(2);
+
         for (const app of criticalApps) {
           try {
             await this.applicationsService.triggerManualReminder(app.id);
             this.logger.warn(
-              `🚨 Triggered critical reminder for ${app.company} - ${app.role} (deadline in < 2 hours)`
+              `🚨 Triggered critical reminder for ${app.company} - ${app.role} (deadline in < 2 hours)`,
             );
           } catch (error) {
-            this.logger.error(`Failed to trigger reminder for application ${app.id}:`, error);
+            this.logger.error(
+              `Failed to trigger reminder for application ${app.id}:`,
+              error,
+            );
           }
         }
       }
@@ -85,13 +91,15 @@ export class DeadlineSchedulerService {
   })
   async dailyDeadlineSummary() {
     this.logger.log('Generating daily deadline summary...');
-    
+
     try {
-      const results = await this.applicationsService.monitorDeadlineApproachingApplications();
-      const overdueApps = await this.applicationsService.getOverdueApplications();
-      
+      const results =
+        await this.applicationsService.monitorDeadlineApproachingApplications();
+      const overdueApps =
+        await this.applicationsService.getOverdueApplications();
+
       this.logger.log(
-        `📊 Daily Summary: ${results.urgent.length} urgent (24h), ${results.approaching.length} approaching (3 days), ${overdueApps.length} overdue`
+        `📊 Daily Summary: ${results.urgent.length} urgent (24h), ${results.approaching.length} approaching (3 days), ${overdueApps.length} overdue`,
       );
 
       // Additional logic could be added here to send summary emails, Slack messages, etc.
@@ -109,7 +117,7 @@ export class DeadlineSchedulerService {
     overdue: number;
   }> {
     this.logger.log('Manual deadline monitoring triggered');
-    
+
     try {
       const [results, overdueApps] = await Promise.all([
         this.applicationsService.monitorDeadlineApproachingApplications(),
@@ -122,11 +130,13 @@ export class DeadlineSchedulerService {
         overdue: overdueApps.length,
       };
 
-      this.logger.log(`Manual monitoring completed: ${JSON.stringify(summary)}`);
+      this.logger.log(
+        `Manual monitoring completed: ${JSON.stringify(summary)}`,
+      );
       return summary;
     } catch (error) {
       this.logger.error('Failed during manual deadline monitoring:', error);
       throw error;
     }
   }
-} 
+}

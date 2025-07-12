@@ -37,7 +37,9 @@ describe('LlmService', () => {
 
     it('should generate cover letter when API is available', async () => {
       // Given - Spy on the service method to return mocked result
-      jest.spyOn(service, 'generateCoverLetter').mockResolvedValue('Generated cover letter content');
+      jest
+        .spyOn(service, 'generateCoverLetter')
+        .mockResolvedValue('Generated cover letter content');
 
       // When
       const result = await service.generateCoverLetter(request);
@@ -77,12 +79,15 @@ describe('LlmService', () => {
   });
 
   describe('improveCoverLetter', () => {
-    const originalLetter = 'Dear Hiring Manager, I am interested in the position.';
+    const originalLetter =
+      'Dear Hiring Manager, I am interested in the position.';
     const feedback = 'Make it more enthusiastic and specific.';
 
     it('should improve cover letter when API is available', async () => {
       // Given - Spy on the service method to return mocked result
-      jest.spyOn(service, 'improveCoverLetter').mockResolvedValue('Generated improved cover letter content');
+      jest
+        .spyOn(service, 'improveCoverLetter')
+        .mockResolvedValue('Generated improved cover letter content');
 
       // When
       const result = await service.improveCoverLetter(originalLetter, feedback);

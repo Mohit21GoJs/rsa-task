@@ -1,53 +1,58 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Application } from '@/lib/types'
-import { applicationApi } from '@/lib/api'
-import { X, FileText, RefreshCw, Copy, CheckCheck } from 'lucide-react'
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Application } from '@/lib/types';
+import { applicationApi } from '@/lib/api';
+import { X, FileText, RefreshCw, Copy, CheckCheck } from 'lucide-react';
 
 interface CoverLetterModalProps {
-  application: Application
-  isOpen: boolean
-  onClose: () => void
-  onUpdate: () => void
+  application: Application;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate: () => void;
 }
 
-export function CoverLetterModal({ application, isOpen, onClose, onUpdate }: CoverLetterModalProps) {
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [currentApplication, setCurrentApplication] = useState(application)
-  const [isCopied, setIsCopied] = useState(false)
+export function CoverLetterModal({
+  application,
+  isOpen,
+  onClose,
+  onUpdate,
+}: CoverLetterModalProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [currentApplication, setCurrentApplication] = useState(application);
+  const [isCopied, setIsCopied] = useState(false);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const handleGenerateCoverLetter = async () => {
-    setIsGenerating(true)
+    setIsGenerating(true);
     try {
-      const updatedApplication = await applicationApi.generateCoverLetter(application.id)
-      setCurrentApplication(updatedApplication)
-      onUpdate() // Refresh the parent component
+      const updatedApplication = await applicationApi.generateCoverLetter(application.id);
+      setCurrentApplication(updatedApplication);
+      onUpdate(); // Refresh the parent component
     } catch (error) {
-      console.error('Error generating cover letter:', error)
-      alert('Error generating cover letter. Please try again.')
+      console.error('Error generating cover letter:', error);
+      alert('Error generating cover letter. Please try again.');
     } finally {
-      setIsGenerating(false)
+      setIsGenerating(false);
     }
-  }
+  };
 
   const handleCopyToClipboard = async () => {
     if (currentApplication.coverLetter) {
       try {
-        await navigator.clipboard.writeText(currentApplication.coverLetter)
-        setIsCopied(true)
-        setTimeout(() => setIsCopied(false), 2000)
+        await navigator.clipboard.writeText(currentApplication.coverLetter);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
       } catch (error) {
-        console.error('Failed to copy to clipboard:', error)
-        alert('Failed to copy to clipboard')
+        console.error('Failed to copy to clipboard:', error);
+        alert('Failed to copy to clipboard');
       }
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -104,7 +109,7 @@ export function CoverLetterModal({ application, isOpen, onClose, onUpdate }: Cov
             </Button>
           </div>
         </CardHeader>
-        
+
         <CardContent className="overflow-y-auto max-h-[calc(90vh-120px)]">
           {currentApplication.coverLetter ? (
             <div className="space-y-4">
@@ -113,7 +118,7 @@ export function CoverLetterModal({ application, isOpen, onClose, onUpdate }: Cov
                   {currentApplication.coverLetter}
                 </pre>
               </div>
-              
+
               <div className="text-xs text-gray-500 text-center">
                 Cover letter generated using AI. Please review and customize as needed.
               </div>
@@ -121,11 +126,10 @@ export function CoverLetterModal({ application, isOpen, onClose, onUpdate }: Cov
           ) : (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Cover Letter Generated
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Cover Letter Generated</h3>
               <p className="text-gray-600 mb-6">
-                Generate a personalized cover letter using AI based on your resume and job description.
+                Generate a personalized cover letter using AI based on your resume and job
+                description.
               </p>
               <Button onClick={handleGenerateCoverLetter} disabled={isGenerating}>
                 {isGenerating ? (
@@ -145,5 +149,5 @@ export function CoverLetterModal({ application, isOpen, onClose, onUpdate }: Cov
         </CardContent>
       </Card>
     </div>
-  )
-} 
+  );
+}
