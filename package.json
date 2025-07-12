@@ -30,7 +30,7 @@
     "migration:run": "pnpm --filter './backend' run migration:run",
     "migration:revert": "pnpm --filter './backend' run migration:revert",
     "migration:create": "pnpm --filter './backend' run migration:create",
-    "prepare": "husky install"
+    "prepare": "[ \"$NODE_ENV\" = \"production\" ] || husky install"
   },
   "workspaces": [
     "backend",

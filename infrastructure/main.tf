@@ -61,7 +61,7 @@ resource "render_web_service" "backend" {
     native_runtime = {
       auto_deploy   = var.auto_deploy_enabled
       branch        = var.github_branch
-      build_command = "pnpm install --frozen-lockfile && pnpm run build:backend"
+      build_command = "pnpm install --frozen-lockfile --prod=false && pnpm run build:backend"
       repo_url      = "https://github.com/Mohit21GoJs/rsa-task"
       runtime       = "node"
 
@@ -93,17 +93,16 @@ resource "render_web_service" "frontend" {
   plan   = var.frontend_plan
   region = var.region
 
-  start_command = "npm start"
+  start_command = "cd frontend && npm run start"
 
   # Runtime source configuration with GitHub authentication
   runtime_source = {
     native_runtime = {
       auto_deploy    = var.auto_deploy_enabled
       branch         = var.github_branch
-      build_command  = "pnpm install --frozen-lockfile && pnpm run build:frontend"
+      build_command  = "pnpm install --frozen-lockfile --prod=false && pnpm run build:frontend"
       repo_url       = "https://github.com/Mohit21GoJs/rsa-task"
       runtime        = "node"
-      root_directory = "frontend"
 
       # GitHub authentication for private repository access
       github_repo = var.github_access_token != "" ? {
@@ -151,15 +150,18 @@ resource "render_env_group" "backend" {
     TEMPORAL_NAMESPACE = {
       value = var.temporal_namespace
     }
+    # AI Integration
+    GEMINI_API_KEY = {
+      value = var.gemini_api_key
+    }
+    # Application settings
     GRACE_PERIOD_DAYS = {
       value = tostring(var.grace_period_days)
     }
     DEFAULT_DEADLINE_WEEKS = {
       value = tostring(var.default_deadline_weeks)
     }
-    DATABASE_NAME = {
-      value = render_postgres.database.database_name
-    }
+    # Security and performance settings
     CORS_ORIGINS = {
       value = join(",", var.allowed_origins)
     }
@@ -197,6 +199,13 @@ resource "render_env_group" "frontend" {
     }
     NEXT_PUBLIC_APP_ENV = {
       value = var.environment
+    }
+    # Frontend specific settings
+    NEXT_TELEMETRY_DISABLED = {
+      value = "1"
+    }
+    HOSTNAME = {
+      value = "0.0.0.0"
     }
   }
 }
