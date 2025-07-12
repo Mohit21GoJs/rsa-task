@@ -37,7 +37,7 @@ RATE_LIMIT_TTL_LONG=3600000
 RATE_LIMIT_LIMIT_LONG=1000
 
 # CORS Configuration
-CORS_ORIGIN=http://localhost:3001,http://localhost:3000
+CORS_ORIGIN=http://localhost:4000,http://localhost:3000
 CORS_CREDENTIALS=true
 
 # Security Headers

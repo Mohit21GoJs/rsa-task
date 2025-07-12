@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { Public } from '../common/guards/api-key.guard';
 
 export interface HealthCheckResponse {
   status: 'ok' | 'error';
@@ -23,6 +24,7 @@ export class HealthController {
   constructor(private readonly configService: ConfigService) {}
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'Health check endpoint' })
   @ApiResponse({
     status: 200,

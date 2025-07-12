@@ -25,7 +25,12 @@ async function bootstrap() {
               'https://fonts.googleapis.com',
             ],
             fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Needed for Swagger
+            scriptSrc: [
+              "'self'",
+              "'unsafe-inline'",
+              "'unsafe-eval'",
+              'https://cdn.jsdelivr.net',
+            ], // Needed for Swagger and Scalar API reference
             imgSrc: ["'self'", 'data:', 'https:'],
             connectSrc: ["'self'"],
           },
@@ -92,9 +97,7 @@ async function bootstrap() {
   );
 
   // Global prefix for all routes
-  app.setGlobalPrefix('api', {
-    exclude: ['/health', '/'], // Exclude health check from prefix
-  });
+  app.setGlobalPrefix('api');
 
   const port = configService.get('PORT', 3000);
 
@@ -126,14 +129,6 @@ async function bootstrap() {
       },
       'apikey',
     )
-    .addServer(
-      `http://localhost:${configService.get('PORT', 3000)}`,
-      'Development server',
-    )
-    .addServer(
-      'https://job-assistant-backend-hhnj.onrender.com',
-      'Production server',
-    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -149,20 +144,10 @@ async function bootstrap() {
   app.use(
     '/api/playground',
     apiReference({
-      theme: 'moon',
+      theme: 'laserwave',
       content: document,
     }),
   );
-
-  // Health check endpoint (no prefix)
-  app.use('/health', (req, res) => {
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      environment: configService.get('NODE_ENV', 'development'),
-    });
-  });
 
   await app.listen(port);
 
