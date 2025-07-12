@@ -52,7 +52,7 @@ resource "render_web_service" "backend" {
   plan   = var.backend_plan
   region = var.region
 
-  start_command = "cd backend && node dist/src/main.js"
+  start_command = "pnpm run migration:run && cd backend && node dist/src/main.js"
 
   # Health check configuration
   health_check_path = "/api/health"
