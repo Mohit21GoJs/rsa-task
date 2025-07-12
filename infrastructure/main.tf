@@ -192,7 +192,7 @@ resource "render_env_group" "frontend" {
       value = var.environment == "production" ? "production" : "staging"
     }
     NEXT_PUBLIC_API_URL = {
-      value = render_web_service.backend.url
+      value = "${render_web_service.backend.url}/api"
     }
     PORT = {
       value = "3000"
