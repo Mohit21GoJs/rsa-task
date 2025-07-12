@@ -8,9 +8,9 @@ output "frontend_url" {
   value       = "https://${render_web_service.frontend.url}"
 }
 
-output "worker_url" {
-  description = "URL of the deployed worker service"
-  value       = "https://${render_web_service.worker.url}"
+output "worker_name" {
+  description = "Name of the deployed worker service"
+  value       = render_background_worker.worker.name
 }
 
 
@@ -31,7 +31,7 @@ output "frontend_service_id" {
 
 output "worker_service_id" {
   description = "Render service ID for the worker"
-  value       = render_web_service.worker.id
+  value       = render_background_worker.worker.id
 }
 
 output "database_id" {

@@ -120,7 +120,7 @@ resource "render_web_service" "frontend" {
 }
 
 # Background Worker Service
-resource "render_web_service" "worker" {
+resource "render_background_worker" "worker" {
   name   = "${local.app_name}-worker"
   plan   = var.worker_plan
   region = var.region
@@ -275,5 +275,5 @@ resource "render_env_group_link" "frontend" {
 
 resource "render_env_group_link" "worker" {
   env_group_id = render_env_group.worker.id
-  service_ids  = [render_web_service.worker.id]
+  service_ids  = [render_background_worker.worker.id]
 } 
