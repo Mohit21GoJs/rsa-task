@@ -98,11 +98,11 @@ resource "render_web_service" "frontend" {
   # Runtime source configuration with GitHub authentication
   runtime_source = {
     native_runtime = {
-      auto_deploy    = var.auto_deploy_enabled
-      branch         = var.github_branch
-      build_command  = "pnpm install --frozen-lockfile --prod=false && pnpm run build:frontend"
-      repo_url       = "https://github.com/Mohit21GoJs/rsa-task"
-      runtime        = "node"
+      auto_deploy   = var.auto_deploy_enabled
+      branch        = var.github_branch
+      build_command = "pnpm install --frozen-lockfile --prod=false && pnpm run build:frontend"
+      repo_url      = "https://github.com/Mohit21GoJs/rsa-task"
+      runtime       = "node"
 
       # GitHub authentication for private repository access
       github_repo = var.github_access_token != "" ? {
