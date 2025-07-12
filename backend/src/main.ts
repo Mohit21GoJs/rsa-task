@@ -46,11 +46,12 @@ async function bootstrap() {
   }
 
   // Request logging middleware
-  app.use(new RequestLoggerMiddleware().use);
+  const requestLoggerMiddleware = new RequestLoggerMiddleware();
+  app.use(requestLoggerMiddleware.use.bind(requestLoggerMiddleware));
 
   // Enhanced CORS configuration
   const corsOrigins = configService
-    .get('CORS_ORIGIN', 'http://localhost:3001')
+    .get('CORS_ORIGIN', 'http://localhost:3000')
     .split(',')
     .map((origin) => origin.trim());
 
