@@ -208,17 +208,6 @@ resource "render_env_group" "backend" {
     ENABLE_REQUEST_LOGGING = {
       value = "true"
     }
-    # External service configurations
-    TEMPORAL_ADDRESS = {
-      value = var.temporal_address
-    }
-    GEMINI_API_KEY = {
-      value = var.gemini_api_key
-    }
-    # Database configuration will be automatically set by Render
-    DATABASE_URL = {
-      value = render_postgres.database.database_url
-    }
   }
 }
 
@@ -269,20 +258,6 @@ resource "render_env_group" "worker" {
     }
     LOG_LEVEL = {
       value = var.environment == "production" ? "info" : "debug"
-    }
-    ENABLE_REQUEST_LOGGING = {
-      value = "true"
-    }
-    # External service configurations
-    TEMPORAL_ADDRESS = {
-      value = var.temporal_address
-    }
-    GEMINI_API_KEY = {
-      value = var.gemini_api_key
-    }
-    # Database configuration will be automatically set by Render
-    DATABASE_URL = {
-      value = render_postgres.database.database_url
     }
   }
 }
