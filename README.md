@@ -25,6 +25,7 @@ pnpm run start
 - 🌐 Frontend: http://localhost:3000
 - 🔧 Backend API: http://localhost:3001
 - 📊 Temporal UI: http://localhost:8080
+- 📋 API Playground: http://localhost:3001/api/docs (powered by Scalar)
 
 ## 🏗️ Architecture
 
@@ -217,6 +218,20 @@ graph TB
 | **Local**      | Self-hosted v1.19.2 in Docker |
 | **Production** | External Temporal cluster     |
 
+### Temporal Deployment Template
+
+For deploying Temporal in production environments, use our dedicated template:
+
+🔗 **Temporal Deployment Template**: https://github.com/Mohit21GoJs/temporal-render-simple/tree/main/server
+
+This template provides:
+
+- Pre-configured Temporal server setup
+- Docker configuration for easy deployment
+- Production-ready environment variables
+- Health check endpoints
+- Monitoring and logging configuration
+
 ## 🧪 Testing
 
 ```bash
@@ -235,11 +250,12 @@ cd backend && pnpm run test:watch
 
 ### Health Endpoints
 
-| Endpoint               | Purpose                    |
-| ---------------------- | -------------------------- |
-| `/api/health`          | General application health |
-| `/api/health/db`       | Database connectivity      |
-| `/api/health/temporal` | Temporal worker status     |
+| Endpoint               | Purpose                                   |
+| ---------------------- | ----------------------------------------- |
+| `/api/health`          | General application health                |
+| `/api/health/db`       | Database connectivity                     |
+| `/api/health/temporal` | Temporal worker status                    |
+| `/api/docs`            | API documentation and playground (Scalar) |
 
 ### Production Monitoring
 

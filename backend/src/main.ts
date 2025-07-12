@@ -96,6 +96,8 @@ async function bootstrap() {
     exclude: ['/health', '/'], // Exclude health check from prefix
   });
 
+  const port = configService.get('PORT', 3000);
+
   // Enhanced Swagger documentation setup
   const config = new DocumentBuilder()
     .setTitle('Job Application Assistant API')
@@ -124,8 +126,14 @@ async function bootstrap() {
       },
       'apikey',
     )
-    .addServer('http://localhost:3000', 'Development server')
-    .addServer('https://api.yourdomain.com', 'Production server')
+    .addServer(
+      `http://localhost:${configService.get('PORT', 3000)}`,
+      'Development server',
+    )
+    .addServer(
+      'https://job-assistant-backend-hhnj.onrender.com',
+      'Production server',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -156,7 +164,6 @@ async function bootstrap() {
     });
   });
 
-  const port = configService.get('PORT', 3000);
   await app.listen(port);
 
   console.log(`🚀 Application is running on: http://localhost:${port}`);
