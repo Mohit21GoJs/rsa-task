@@ -9,8 +9,6 @@ import {
   HttpCode,
   HttpStatus,
   Query,
-  Sse,
-  MessageEvent,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,7 +17,6 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { Observable } from 'rxjs';
 
 import { ApplicationsService } from './applications.service';
 import { DeadlineSchedulerService } from './deadline-scheduler.service';
@@ -80,37 +77,6 @@ export class ApplicationsController {
   })
   getOverdueApplications(): Promise<Application[]> {
     return this.applicationsService.getOverdueApplications();
-  }
-
-  @Sse('notifications')
-  @ApiOperation({ summary: 'Server-sent events for real-time notifications' })
-  @ApiResponse({
-    status: 200,
-    description: 'Real-time notification stream',
-    headers: {
-      'Content-Type': { description: 'text/event-stream' },
-      'Cache-Control': { description: 'no-cache' },
-      Connection: { description: 'keep-alive' },
-    },
-  })
-  notifications(): Observable<MessageEvent> {
-    console.log('📡 New SSE client connecting...');
-    try {
-      return this.applicationsService.getNotificationStream();
-    } catch (error) {
-      console.error('❌ Error creating notification stream:', error);
-      throw error;
-    }
-  }
-
-  @Get('notifications/history')
-  @ApiOperation({ summary: 'Get notification history' })
-  @ApiResponse({
-    status: 200,
-    description: 'Notification history retrieved successfully',
-  })
-  getNotificationHistory(): Promise<any[]> {
-    return this.applicationsService.getNotificationsHistory();
   }
 
   @Get('monitor/deadlines')
@@ -188,50 +154,6 @@ export class ApplicationsController {
     return this.deadlineSchedulerService.triggerManualMonitoring();
   }
 
-  @Get('notifications/stats')
-  @ApiOperation({ summary: 'Get SSE connection statistics' })
-  @ApiResponse({
-    status: 200,
-    description: 'SSE connection statistics',
-    schema: {
-      type: 'object',
-      properties: {
-        totalConnections: { type: 'number' },
-        activeConnections: { type: 'number' },
-        connections: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              connectedAt: { type: 'string' },
-              isActive: { type: 'boolean' },
-            },
-          },
-        },
-      },
-    },
-  })
-  getSSEStats(): any {
-    return this.applicationsService.getConnectionStats();
-  }
-
-  @Get('notifications/health')
-  @ApiOperation({ summary: 'Health check for SSE service' })
-  @ApiResponse({
-    status: 200,
-    description: 'SSE service health information',
-  })
-  getSSEHealth(): any {
-    const stats = this.applicationsService.getConnectionStats();
-    return {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      connections: stats,
-      message: 'SSE service is operational',
-    };
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific job application' })
   @ApiParam({ name: 'id', description: 'Application ID' })
@@ -291,6 +213,25 @@ export class ApplicationsController {
   @HttpCode(HttpStatus.OK)
   triggerReminder(@Param('id') id: string): Promise<void> {
     return this.applicationsService.triggerManualReminder(id);
+  }
+
+  @Post(':id/test-cover-letter-notification')
+  @ApiOperation({ summary: 'Test cover letter generation notification (for testing)' })
+  @ApiParam({ name: 'id', description: 'Application ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Test notification sent successfully',
+  })
+  @HttpCode(HttpStatus.OK)
+  async testCoverLetterNotification(@Param('id') id: string): Promise<{ message: string }> {
+    const application = await this.applicationsService.findOne(id);
+    
+    // Send a test cover letter generation notification
+    await this.applicationsService.sendTestCoverLetterNotification(application);
+    
+    return { 
+      message: `Test cover letter notification sent for ${application.company} - ${application.role}` 
+    };
   }
 
   @Delete(':id')

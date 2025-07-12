@@ -4,9 +4,10 @@ import {
   UpdateApplicationDto,
   ApplicationStatus,
 } from './types';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { io, Socket } from 'socket.io-client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:4000';
 
 class ApiError extends Error {
   constructor(
@@ -118,55 +119,63 @@ export const applicationApi = {
     return fetchApi<Application[]>('/applications/overdue');
   },
 
-  // Create SSE connection for notifications using @microsoft/fetch-event-source
+  // Create Socket.IO connection for notifications
   createNotificationStream: (
     onMessage: (event: { data: string }) => void,
     onError?: (error: unknown) => void,
     onOpen?: () => void,
   ) => {
-    const abortController = new AbortController();
+    const socket: Socket = io(`${WS_BASE_URL}/notifications`, {
+      transports: ['websocket'],
+      upgrade: true,
+    });
 
-    const startStream = async () => {
-      try {
-        await fetchEventSource(`${API_BASE_URL}/applications/notifications`, {
-          method: 'GET',
-          headers: {
-            'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '',
-          },
-          signal: abortController.signal,
-          async onopen() {
-            console.log('📡 Connected to notification stream');
-            onOpen?.();
-          },
-          onmessage(event) {
-            // Just pass the data property that's actually used
-            onMessage({ data: event.data });
-          },
-          onerror(error) {
-            console.error('SSE connection error:', error);
-            onError?.(error);
-            throw error; // This will trigger a reconnect
-          },
-        });
-      } catch (error) {
-        console.error('Failed to create SSE connection:', error);
-        onError?.(error);
-      }
-    };
+    // Connection established
+    socket.on('connect', () => {
+      console.log('📡 Connected to notification stream via Socket.IO');
+      onOpen?.();
+      
+      // Subscribe to notifications
+      socket.emit('subscribe-notifications', {});
+    });
 
-    // Start the stream
-    startStream();
+    // Handle incoming notifications
+    socket.on('notification', (notification: NotificationEvent) => {
+      // Convert to the format expected by the existing logic
+      onMessage({ data: JSON.stringify(notification) });
+    });
+
+    // Handle connection errors
+    socket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
+      onError?.(error);
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', (reason) => {
+      console.log('Socket.IO disconnected:', reason);
+    });
+
+    // Handle subscription confirmation
+    socket.on('subscription-confirmed', (data) => {
+      console.log('Subscription confirmed:', data);
+    });
+
+    // Handle notifications history
+    socket.on('notifications-history', (data) => {
+      console.log('Received notifications history:', data);
+    });
 
     // Return an object with close method for cleanup
     return {
       close: () => {
-        abortController.abort();
+        socket.disconnect();
       },
     };
   },
 
-  // Get SSE connection statistics
-  getSSEStats: async (): Promise<{
+  // Get Socket.IO connection statistics
+  getSocketStats: async (): Promise<{
     totalConnections: number;
     activeConnections: number;
     connections: Array<{
@@ -175,7 +184,7 @@ export const applicationApi = {
       isActive: boolean;
     }>;
   }> => {
-    const response = await fetch(`${API_BASE_URL}/applications/notifications/stats`, {
+    const response = await fetch(`${API_BASE_URL}/notifications/stats`, {
       headers: {
         'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '',
       },

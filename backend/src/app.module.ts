@@ -8,6 +8,7 @@ import { WorkflowModule } from './workflow/workflow.module';
 import { LlmModule } from './llm/llm.module';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { HealthModule } from './health/health.module';
     WorkflowModule,
     LlmModule,
     HealthModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

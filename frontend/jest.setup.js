@@ -45,31 +45,33 @@ jest.mock('next/navigation', () => ({
 // Mock environment variables
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000'
 
-// Mock @microsoft/fetch-event-source
-jest.mock('@microsoft/fetch-event-source', () => ({
-  fetchEventSource: jest.fn().mockImplementation((url, options) => {
-    // Mock successful connection
-    if (options.onopen) {
-      options.onopen()
+// Mock socket.io-client
+jest.mock('socket.io-client', () => ({
+  io: jest.fn().mockImplementation((url, options) => {
+    const mockSocket = {
+      on: jest.fn((event, callback) => {
+        if (event === 'connect') {
+          // Mock successful connection
+          setTimeout(() => callback(), 10)
+        } else if (event === 'notification') {
+          // Mock notification received
+          setTimeout(() => {
+            callback({
+              type: 'test',
+              applicationId: 'test-id',
+              company: 'Test Company',
+              role: 'Test Role',
+              message: 'Test message',
+              timestamp: new Date().toISOString()
+            })
+          }, 100)
+        }
+      }),
+      emit: jest.fn(),
+      disconnect: jest.fn(),
+      connected: true
     }
-    
-    // Mock message received
-    if (options.onmessage) {
-      setTimeout(() => {
-        options.onmessage({
-          data: JSON.stringify({
-            type: 'test',
-            applicationId: 'test-id',
-            company: 'Test Company',
-            role: 'Test Role',
-            message: 'Test message',
-            timestamp: new Date().toISOString()
-          })
-        })
-      }, 100)
-    }
-    
-    return Promise.resolve()
+    return mockSocket
   })
 }))
 
