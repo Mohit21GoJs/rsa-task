@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database for application
   postgres:
     image: postgres:15-alpine
     environment:
@@ -18,6 +18,86 @@ services:
       timeout: 10s
       retries: 3
 
+  # Temporal Database - Single server with multiple databases
+  temporal-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: temporal
+    ports:
+      - "5433:5432"
+    volumes:
+      - temporal_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for Temporal (local development)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Temporal Server with custom auto-setup
+  temporal:
+    build:
+      context: ./temporal
+      dockerfile: Dockerfile
+    depends_on:
+      temporal-db:
+        condition: service_healthy
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_SEEDS=temporal-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PWD=postgres
+      - DBNAME=temporal
+      - VISIBILITY_DB_PORT=5432
+      - VISIBILITY_POSTGRES_SEEDS=temporal-db
+      - VISIBILITY_POSTGRES_USER=postgres
+      - VISIBILITY_POSTGRES_PWD=postgres
+      - VISIBILITY_DBNAME=temporal_visibility
+      - SKIP_SCHEMA_SETUP=false
+      - SKIP_DEFAULT_NAMESPACE_CREATION=false
+      - DEFAULT_NAMESPACE=default
+      - DEFAULT_NAMESPACE_RETENTION=1
+      - SKIP_ADD_CUSTOM_SEARCH_ATTRIBUTES=true
+      - ENABLE_ES=false
+      - BIND_ON_IP=0.0.0.0
+      - TEMPORAL_CLI_ADDRESS=0.0.0.0:7233
+      - SQL_TLS_ENABLED=false
+      - TEMPORAL_LOG_LEVEL=info
+      - SKIP_POSTGRES_DB_CREATION=true
+    ports:
+      - "7233:7233"
+      - "7234:7234"
+      - "7235:7235"
+      - "7239:7239"
+      - "6933:6933"
+    restart: unless-stopped
+
+  # Temporal Web UI (based on temporal-render-simple)
+  temporal-ui:
+    image: temporalio/ui:2.21.3
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_GRPC_ENDPOINT=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
   # Main Application
   app:
     build:
@@ -32,16 +112,19 @@ services:
       - DATABASE_USERNAME=postgres
       - DATABASE_PASSWORD=postgres
       - DATABASE_NAME=job_assistant
-      - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS:-localhost:7233}
+      - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS:-temporal:7233}
       - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE:-default}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-your_gemini_api_key_here}
     depends_on:
       postgres:
         condition: service_healthy
+      temporal:
+        condition: service_started
     volumes:
       - .:/app
       - /app/node_modules
     command: ["pnpm", "run", "start:dev"]
 
 volumes:
-  postgres_data: 
+  postgres_data:
+  temporal_db_data: 

@@ -1,74 +1,45 @@
-# Job Application Assistant App
+# Job Application Assistant
 
-A job application tracking system built with NestJS, Temporal.io workflows, and AI-powered cover letter generation. This is a monorepo containing both backend and frontend applications.
+A job application tracking system built with NestJS, Next.js, and AI-powered features. This is a monorepo containing both backend and frontend applications with a hybrid Temporal setup: local development uses self-hosted Temporal, while production uses external Temporal clusters.
 
-## 🏗️ Architecture
-
-This project is structured as a monorepo with:
+## 🏗️ Project Structure
 
 - **`backend/`**: NestJS API server with Temporal.io workflows
-- **`frontend/`**: Frontend application (React/Next.js)
-- **`temporal/`**: Temporal.io workflow definitions and workers
-- **Docker & Infrastructure**: Ready for deployment
+- **`frontend/`**: Next.js web application
+- **`temporal/`**: Local development Temporal configuration
+- **`infrastructure/`**: Terraform configuration for production deployment
 
-## Features
+## ✨ Key Features
 
-- 📝 **Application Management**: Create, update, and track job applications
-- 🤖 **AI Cover Letters**: Automatically generate cover letters using Google Gemini
-- ⏰ **Smart Reminders**: Temporal.io workflows for deadline tracking
-- 🗄️ **Auto-archiving**: Automatically archive expired applications
-- 📊 **Status Tracking**: Monitor application progress (Pending, Interview, Offer, etc.)
-- 🔔 **Notifications**: Get notified about important deadlines
-- 📚 **API Documentation**: Comprehensive Swagger documentation
+- 📝 **Application Tracking**: Add, edit, and track job applications
+- 🤖 **AI Cover Letters**: Generate personalized cover letters with Google Gemini
+- 📊 **Application Analytics**: Visual dashboards and insights
+- ⏰ **Smart Reminders**: Background workflows for deadline tracking
+- 📱 **Responsive Design**: Mobile-first UI with dark mode support
+- 🔄 **Real-time Updates**: Live application status updates
+- 🚀 **Production Ready**: Terraform-based infrastructure deployment
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-### Backend
-- **Framework**: NestJS with TypeScript
-- **Workflow Engine**: Temporal.io
-- **Database**: PostgreSQL with TypeORM
-- **AI**: Google Gemini for cover letter generation
-- **Testing**: Jest (Unit & E2E tests)
+- **Backend**: NestJS, TypeScript, PostgreSQL, TypeORM
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
+- **Workflow Engine**: Temporal.io (local dev: v1.19.2, production: external cluster)
+- **AI Integration**: Google Gemini API
+- **Infrastructure**: Terraform, Render.io
+- **Development**: Docker, pnpm, ESLint, Prettier
 
-### Frontend
-- **Framework**: React/Next.js with TypeScript
-- **Styling**: Tailwind CSS / Material-UI
-- **State Management**: Context API / Redux Toolkit
+## 🚀 Quick Start
 
-### Infrastructure
-- **Containerization**: Docker & Docker Compose
-- **Infrastructure**: Terraform (ready)
-- **CI/CD**: GitHub Actions (ready)
-- **Package Manager**: pnpm (workspace support)
-- **Code Quality**: ESLint, Prettier, Husky
+### Prerequisites
 
-## Prerequisites
+- Node.js 18+ and pnpm
+- Docker and Docker Compose
+- PostgreSQL (or use Docker)
 
-- Node.js 18+
-- pnpm
-- Docker & Docker Compose
-- Google Gemini API key (optional, will use mock otherwise)
+### Environment Setup
 
-## Quick Start
+Create a `.env` file in the backend directory:
 
-### 1. Install Dependencies
-
-```bash
-# Install root dependencies and all workspace dependencies
-pnpm install
-
-# Or install all projects manually
-pnpm run install:all
-```
-
-### 2. Environment Setup
-
-```bash
-cp .env .env.local
-# Edit .env.local with your configuration
-```
-
-Required environment variables:
 ```env
 # Database
 DATABASE_HOST=localhost
@@ -77,230 +48,240 @@ DATABASE_USERNAME=postgres
 DATABASE_PASSWORD=postgres
 DATABASE_NAME=job_assistant
 
-# Temporal
+# Temporal (local development)
 TEMPORAL_ADDRESS=localhost:7233
+TEMPORAL_NAMESPACE=default
 
-# Gemini AI (optional)
+# AI Integration
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Application
-PORT=3000
-DEFAULT_DEADLINE_WEEKS=4
+# Application Settings
 GRACE_PERIOD_DAYS=7
+DEFAULT_DEADLINE_WEEKS=2
 ```
 
-### 3. Start Services with Docker
+### Development Setup
 
-```bash
-# Start PostgreSQL, Temporal, and related services
-docker-compose up -d postgres temporal temporal-web
+1. **Clone and Install**:
 
-# Wait for services to be ready (about 30 seconds)
-```
+   ```bash
+   git clone <repository-url>
+   cd rsa-task
+   pnpm install
+   ```
 
-### 4. Run Database Migrations
+2. **Start Infrastructure Services**:
 
-```bash
-# Run migrations from the backend directory
-cd backend
-pnpm run migration:run
-cd ..
-```
+   ```bash
+   # Start PostgreSQL and Temporal (local development)
+   docker-compose up -d postgres temporal temporal-web
 
-### 5. Start the Applications
+   # Wait for services to be ready
+   docker-compose logs -f temporal
+   ```
 
-```bash
-# Start both backend and frontend in development mode
-pnpm run start
+3. **Setup Database**:
 
-# Or start them individually:
-pnpm run start:backend    # Backend only
-pnpm run start:frontend   # Frontend only
-```
+   ```bash
+   cd backend
+   pnpm run migration:run
+   pnpm run seed  # Optional: seed with sample data
+   ```
 
-### 6. Start the Temporal Worker
+4. **Start Development Servers**:
 
-```bash
-# In another terminal, start the Temporal worker
-cd backend
-npx ts-node src/worker/temporal-worker.ts
-```
+   ```bash
+   # Terminal 1: Backend API
+   cd backend
+   pnpm run start:dev
 
-### 7. Access the Applications
+   # Terminal 2: Frontend
+   cd frontend
+   pnpm run dev
+   ```
 
-- **Frontend**: http://localhost:3000 (or 3001 if backend is on 3000)
-- **Backend API**: http://localhost:3000
-- **API Documentation**: http://localhost:3000/api/docs
+5. **Start the Background Worker**:
+   ```bash
+   # Terminal 3: Temporal worker
+   cd backend
+   pnpm run worker:dev
+   ```
+
+### 🌐 Access Points
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
 - **Temporal Web UI**: http://localhost:8080
+- **API Documentation**: http://localhost:3001/api
 
-## Development Commands
+## 📚 Development Guide
 
-### Monorepo Commands (from root)
-
-```bash
-# Build all projects
-pnpm run build
-
-# Start all projects in development
-pnpm run start
-
-# Lint all projects
-pnpm run lint
-
-# Format all projects
-pnpm run format
-
-# Test all projects
-pnpm run test
-```
-
-### Backend Commands
+### Running Tests
 
 ```bash
+# Backend tests
 cd backend
-
-# Development
-pnpm run start:dev        # Start with hot reload
-pnpm run start:debug      # Start in debug mode
-
-# Building
-pnpm run build            # Build for production
-pnpm run start:prod       # Start production build
-
-# Testing
-pnpm run test             # Unit tests
-pnpm run test:e2e         # E2E tests
-pnpm run test:cov         # Test coverage
-pnpm run test:watch       # Watch mode
-
-# Database
-pnpm run migration:generate -- src/migrations/MigrationName
-pnpm run migration:run
-pnpm run migration:revert
-
-# Code Quality
-pnpm run lint
-pnpm run format
-```
-
-### Frontend Commands
-
-```bash
-cd frontend
-
-# Development
-pnpm run dev              # Start development server
-pnpm run build            # Build for production
-pnpm run start            # Start production build
-
-# Testing
 pnpm run test
-pnpm run test:watch
+pnpm run test:e2e
 
-# Code Quality
-pnpm run lint
-pnpm run format
+# Frontend tests
+cd frontend
+pnpm run test
 ```
 
-## API Endpoints
-
-### Applications
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/applications` | Create new application |
-| GET | `/api/applications` | List all applications |
-| GET | `/api/applications?status=pending` | Filter by status |
-| GET | `/api/applications/:id` | Get specific application |
-| PATCH | `/api/applications/:id` | Update application |
-| DELETE | `/api/applications/:id` | Delete application |
-| POST | `/api/applications/archive-expired` | Archive expired applications |
-
-### Example: Create Application
+### Database Operations
 
 ```bash
-curl -X POST http://localhost:3000/api/applications \
-  -H "Content-Type: application/json" \
-  -d '{
-    "company": "Google",
-    "role": "Software Engineer",
-    "jobDescription": "We are looking for a talented software engineer...",
-    "resume": "Experienced software engineer with 5+ years...",
-    "deadline": "2024-03-15T00:00:00.000Z"
-  }'
+# Create migration
+cd backend
+pnpm run migration:create -- -n MigrationName
+
+# Run migrations
+pnpm run migration:run
+
+# Revert migration
+pnpm run migration:revert
 ```
 
-## Project Structure
+### Temporal Workflows
+
+Local development uses Temporal v1.19.2 running in Docker for a complete development environment. Production uses external Temporal clusters for scalability and reliability.
+
+**Local Development**:
+
+- Temporal Server: `localhost:7233`
+- Temporal UI: `localhost:8080`
+- Self-contained with PostgreSQL storage
+
+**Production**:
+
+- External Temporal cluster (configured via `TEMPORAL_ADDRESS`)
+- Managed service with high availability
+- Separate from application infrastructure
+
+## 🏗️ Production Deployment
+
+### Hybrid Temporal Architecture
+
+This project uses a hybrid approach for Temporal:
+
+- **Local Development**: Self-hosted Temporal v1.19.2 in Docker
+- **Production**: External Temporal cluster (Temporal Cloud, self-managed, etc.)
+
+### Infrastructure Setup
+
+1. **Terraform Configuration**:
+
+   ```bash
+   cd infrastructure
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+2. **Environment Variables**:
+
+   ```env
+   # Production environment variables
+   TEMPORAL_ADDRESS=your-external-temporal-cluster:7233
+   TEMPORAL_NAMESPACE=production
+   GEMINI_API_KEY=your_production_gemini_key
+   ```
+
+3. **Deployment**:
+
+   ```bash
+   # Automated deployment via GitHub Actions
+   git push origin main
+
+   # Manual deployment
+   ./scripts/deploy-terraform.sh
+   ```
+
+## 🔧 Configuration
+
+### Local Development Services
+
+The `docker-compose.yml` includes:
+
+- **PostgreSQL**: Database for applications
+- **Temporal Server**: Workflow orchestration (v1.19.2)
+- **Temporal Web UI**: Workflow monitoring
+- **Redis**: Temporal dependencies
+
+### Production Services
+
+The Terraform configuration deploys:
+
+- **Backend API**: NestJS application
+- **Frontend**: Next.js web application
+- **Background Worker**: Temporal worker connecting to external cluster
+- **PostgreSQL**: Managed database
+
+## 📁 Project Structure
 
 ```
-persona-job-assistant/
-├── backend/                    # NestJS Backend Application
+rsa-task/
+├── backend/                    # NestJS backend
 │   ├── src/
-│   │   ├── applications/       # Application module
+│   │   ├── applications/       # Application management
+│   │   ├── llm/               # AI integration
 │   │   ├── workflow/          # Temporal workflows
 │   │   ├── worker/            # Temporal workers
-│   │   ├── llm/              # AI integration
-│   │   ├── common/           # Shared utilities
-│   │   └── main.ts           # Application entry point
-│   ├── test/                 # Backend tests
-│   ├── dist/                 # Compiled output
-│   ├── package.json          # Backend dependencies
-│   ├── tsconfig.json         # Backend TypeScript config
-│   ├── nest-cli.json         # NestJS CLI config
-│   └── jest.config.js        # Backend test config
-├── frontend/                   # Frontend Application
-│   ├── src/                  # Frontend source code
-│   ├── public/               # Static assets
-│   ├── package.json          # Frontend dependencies
-│   └── ...                   # Frontend config files
-├── temporal/                   # Temporal workflows & configs
-├── docker-compose.yml          # Development services
-├── Dockerfile                  # Backend container
-├── package.json               # Root workspace config
-├── tsconfig.json              # Root TypeScript config
-└── README.md                  # This file
+│   │   └── ...
+│   └── ...
+├── frontend/                   # Next.js frontend
+│   ├── src/
+│   │   ├── app/               # Next.js app router
+│   │   ├── components/        # React components
+│   │   └── ...
+│   └── ...
+├── temporal/                   # Local development only
+│   ├── development-sql.yaml   # Temporal config
+│   └── Dockerfile            # Custom temporal image
+├── infrastructure/             # Terraform configs
+│   ├── main.tf               # Main infrastructure
+│   ├── variables.tf          # Variables
+│   └── ...
+└── docker-compose.yml         # Local development services
 ```
 
-## Application Workflow
+## 🔄 Workflow Architecture
 
-1. **Create Application**: Submit job details via frontend/API
-2. **AI Processing**: Automatically generates cover letter using Google Gemini
-3. **Temporal Workflow**: 
-   - Sets up deadline monitoring
-   - Schedules reminder notifications
-   - Handles auto-archiving logic
-4. **Status Updates**: Update status through frontend as you progress
-5. **Deadline Management**: 
-   - Reminder notifications at deadline
-   - Grace period for status updates
-   - Auto-archive if no response after grace period
+### Local Development Flow
 
-## Deployment
+1. **Docker Compose**: Starts Temporal server locally
+2. **Backend Worker**: Connects to local Temporal
+3. **Workflows**: Execute on local Temporal cluster
+4. **UI**: Monitor workflows via Temporal Web UI
 
-### Using Docker
+### Production Flow
 
-```bash
-# Build backend image
-docker build -t job-assistant-backend .
+1. **External Temporal**: Managed Temporal cluster
+2. **Background Worker**: Deployed to Render.io
+3. **Workflows**: Execute on external cluster
+4. **Monitoring**: External Temporal UI/dashboard
 
-# Run with docker-compose
-docker-compose up -d
-```
-
-### Environment-specific configurations
-
-- **Development**: Uses `docker-compose.yml` for local services
-- **Production**: Ready for Kubernetes deployment with Terraform configs
-- **Testing**: Isolated test database and services
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For issues and questions:
+
+- Check the [documentation](docs/)
+- Create an issue in the repository
+- Review the [deployment guide](DEPLOY.md)
+
+---
+
+**🎯 Happy Job Hunting!** This tool helps you stay organized and efficient in your job search journey.

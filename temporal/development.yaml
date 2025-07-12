@@ -1,0 +1,97 @@
+log:
+  stdout: true
+  level: info
+
+persistence:
+  defaultStore: default
+  visibilityStore: visibility
+  numHistoryShards: 4
+  datastores:
+    default:
+      sql:
+        pluginName: "postgres"
+        databaseName: "temporal"
+        connectAddr: "temporal-db:5432"
+        connectProtocol: "tcp"
+        user: "postgres"
+        password: "postgres"
+        maxConns: 20
+        maxConnLifetime: "1h"
+        
+    visibility:
+      sql:
+        pluginName: "postgres"
+        databaseName: "temporal_visibility"
+        connectAddr: "temporal-db:5432"
+        connectProtocol: "tcp"
+        user: "postgres"
+        password: "postgres"
+        maxConns: 20
+        maxConnLifetime: "1h"
+
+global:
+  membership:
+    maxJoinDuration: 30s
+    broadcastAddress: "0.0.0.0"
+  pprof:
+    port: 7936
+
+services:
+  frontend:
+    rpc:
+      grpcPort: 7233
+      membershipPort: 6933
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
+
+  matching:
+    rpc:
+      grpcPort: 7235
+      membershipPort: 6935
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
+
+  history:
+    rpc:
+      grpcPort: 7234
+      membershipPort: 6934
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
+
+  worker:
+    rpc:
+      grpcPort: 7239
+      membershipPort: 6939
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
+
+clusterMetadata:
+  enableGlobalNamespace: false
+  failoverVersionIncrement: 10
+  masterClusterName: "active"
+  currentClusterName: "active"
+  clusterInformation:
+    active:
+      enabled: true
+      initialFailoverVersion: 1
+      rpcAddress: "0.0.0.0:7233"
+
+dcRedirectionPolicy:
+  policy: "noop"
+
+archival:
+  history:
+    state: "disabled"
+  visibility:
+    state: "disabled"
+
+namespaceDefaults:
+  archival:
+    history:
+      state: "disabled"
+    visibility:
+      state: "disabled"
+
+dynamicConfigClient:
+  filepath: "/etc/temporal/dynamicconfig.yaml"
+  pollInterval: "10s" 

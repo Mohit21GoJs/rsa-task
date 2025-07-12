@@ -435,10 +435,10 @@ jobs:
           
           # Background worker connectivity
           worker_health=$(curl -s "${{ needs.deploy-backend.outputs.deployment_url }}/api/health/temporal" || echo "failed")
-          if [[ "$temporal_health" == *"healthy"* ]]; then
-            echo "✅ Temporal connection: Healthy" >> $GITHUB_STEP_SUMMARY
+          if [[ "$worker_health" == *"healthy"* ]]; then
+            echo "✅ Background worker connection: Healthy" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Temporal connection: Warning" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Background worker connection: Warning" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Deep health check - Frontend
