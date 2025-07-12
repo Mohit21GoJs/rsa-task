@@ -47,9 +47,11 @@ export class NotificationsGateway
   private connections = new Map<string, ClientConnection>();
   private notificationsHistory: NotificationData[] = [];
   private readonly MAX_HISTORY_SIZE = 100;
+  private isServerInitialized = false;
 
   afterInit() {
     this.logger.log('🔌 Socket.IO Gateway initialized');
+    this.isServerInitialized = true;
   }
 
   handleConnection(client: Socket) {
@@ -127,24 +129,51 @@ export class NotificationsGateway
       this.notificationsHistory.shift();
     }
 
-    // Broadcast to all connected clients
-    this.server.emit('notification', notification);
+    // Check if server is initialized and available
+    if (!this.isServerInitialized || !this.server) {
+      this.logger.warn(
+        `⚠️ WebSocket server not initialized, cannot broadcast notification: ${notification.type}`,
+      );
+      this.logger.warn(
+        `Server state: initialized=${this.isServerInitialized}, server=${!!this.server}`,
+      );
+      return;
+    }
 
-    // Log broadcast stats
-    const activeConnections = Array.from(this.connections.values()).filter(
-      (conn) => conn.isActive,
-    );
-    this.logger.log(
-      `📡 Notification sent to ${activeConnections.length} clients`,
-    );
+    try {
+      // Broadcast to all connected clients
+      this.server.emit('notification', notification);
+
+      // Log broadcast stats
+      const activeConnections = Array.from(this.connections.values()).filter(
+        (conn) => conn.isActive,
+      );
+      this.logger.log(
+        `📡 Notification sent to ${activeConnections.length} clients`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to broadcast notification: ${error.message}`,
+        error.stack,
+      );
+    }
   }
 
   // Method to send notification to specific client
   sendToClient(clientId: string, notification: NotificationData): void {
     const connection = this.connections.get(clientId);
     if (connection && connection.isActive) {
-      connection.socket.emit('notification', notification);
-      this.logger.log(`📨 Notification sent to client: ${clientId}`);
+      try {
+        connection.socket.emit('notification', notification);
+        this.logger.log(`📨 Notification sent to client: ${clientId}`);
+      } catch (error) {
+        this.logger.error(
+          `❌ Failed to send notification to client ${clientId}: ${error.message}`,
+          error.stack,
+        );
+      }
+    } else {
+      this.logger.warn(`⚠️ Client ${clientId} not found or inactive`);
     }
   }
 
@@ -190,12 +219,14 @@ export class NotificationsGateway
     timestamp: string;
     connections: number;
     uptime: string;
+    serverInitialized: boolean;
   } {
     return {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       connections: this.connections.size,
       uptime: process.uptime().toString(),
+      serverInitialized: this.isServerInitialized,
     };
   }
 }

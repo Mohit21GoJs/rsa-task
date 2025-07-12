@@ -27,7 +27,16 @@ export class NotificationsService {
       timestamp: new Date().toISOString(),
     };
 
-    this.notificationsGateway.broadcastNotification(notificationData);
+    try {
+      this.notificationsGateway.broadcastNotification(notificationData);
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to send notification: ${error.message}`,
+        error.stack,
+      );
+      // Don't throw the error - just log it so the activity doesn't fail
+      this.logger.warn(`⚠️ Notification service continuing despite error`);
+    }
   }
 
   // Send notification to specific client
@@ -49,26 +58,76 @@ export class NotificationsService {
       timestamp: new Date().toISOString(),
     };
 
-    this.notificationsGateway.sendToClient(clientId, notificationData);
+    try {
+      this.notificationsGateway.sendToClient(clientId, notificationData);
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to send notification to client ${clientId}: ${error.message}`,
+        error.stack,
+      );
+      // Don't throw the error - just log it so the activity doesn't fail
+      this.logger.warn(`⚠️ Notification service continuing despite error`);
+    }
   }
 
   // Get connection statistics
   getConnectionStats() {
-    return this.notificationsGateway.getConnectionStats();
+    try {
+      return this.notificationsGateway.getConnectionStats();
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to get connection stats: ${error.message}`,
+        error.stack,
+      );
+      return {
+        totalConnections: 0,
+        activeConnections: 0,
+        connections: [],
+      };
+    }
   }
 
   // Get notification history
   getNotificationHistory() {
-    return this.notificationsGateway.getNotificationHistory();
+    try {
+      return this.notificationsGateway.getNotificationHistory();
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to get notification history: ${error.message}`,
+        error.stack,
+      );
+      return [];
+    }
   }
 
   // Clear notification history
   clearNotificationHistory() {
-    this.notificationsGateway.clearNotificationHistory();
+    try {
+      this.notificationsGateway.clearNotificationHistory();
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to clear notification history: ${error.message}`,
+        error.stack,
+      );
+    }
   }
 
   // Get health status
   getHealthStatus() {
-    return this.notificationsGateway.getHealthStatus();
+    try {
+      return this.notificationsGateway.getHealthStatus();
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to get health status: ${error.message}`,
+        error.stack,
+      );
+      return {
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        connections: 0,
+        uptime: '0',
+        serverInitialized: false,
+      };
+    }
   }
 }
