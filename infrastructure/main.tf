@@ -100,7 +100,7 @@ resource "render_web_service" "frontend" {
     native_runtime = {
       auto_deploy    = var.auto_deploy_enabled
       branch         = var.github_branch
-      build_command  = "pnpm install --frozen-lockfile && pnpm run build"
+      build_command  = "pnpm install --frozen-lockfile && pnpm run build:frontend"
       repo_url       = "https://github.com/Mohit21GoJs/rsa-task"
       runtime        = "node"
       root_directory = "frontend"
