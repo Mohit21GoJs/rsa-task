@@ -22,16 +22,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Run backend tests
         working-directory: backend
@@ -40,6 +34,7 @@ jobs:
       - name: Run linting
         run: pnpm run lint
 
+  # TODO: Add depends on test job
   # Plan infrastructure changes
   plan:
     name: 📋 Plan Infrastructure Changes
