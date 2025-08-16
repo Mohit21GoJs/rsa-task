@@ -55,7 +55,7 @@ jobs:
       ci_status: ${{ steps.ci-check.outputs.status }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -168,7 +168,7 @@ jobs:
         working-directory: ./infrastructure
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -236,7 +236,7 @@ jobs:
     environment: ${{ needs.setup.outputs.environment }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -287,7 +287,7 @@ jobs:
       health_check_url: ${{ steps.deploy.outputs.health_url }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -337,7 +337,7 @@ jobs:
       deployment_url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -389,7 +389,7 @@ jobs:
     environment: ${{ needs.setup.outputs.environment }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Deploy Worker with health check
         uses: johnbeynon/render-deploy-action@v0.0.8
